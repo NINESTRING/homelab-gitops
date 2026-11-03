@@ -1,0 +1,31 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.auto.tfvars.example
+crash.log
+.terraform.lock.hcl.bak
+
+# Kubernetes / 자격 증명
+kubeconfig*
+*.kubeconfig
+age.key
+*.agekey
+keys.txt
+
+# 복호화된 시크릿 (암호화된 *.sops.yaml 만 커밋)
+*.dec.yaml
+*.dec.env
+
+# Lima
+bootstrap/lima/*.yaml.bak
+
+# OS / 에디터
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# direnv (자격 증명 포함, .envrc.example 만 커밋)
+.envrc

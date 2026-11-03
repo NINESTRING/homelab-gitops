@@ -2,6 +2,13 @@
 
 집에 있는 M1 Mac mini를 홈서버로 만든다. 인프라는 Terraform, 클러스터 안의 모든 것은 GitOps(Git에 선언 → 컨트롤러가 동기화)로 관리하고, 모든 서비스는 하나의 SSO로 로그인한다.
 
+## 0. 확정된 사항
+
+- 대상 머신: Mac mini M1, RAM 16GB
+- 도메인: `thatsmycodename.com` (Cloudflare Registrar + DNS)
+- 서비스 호스트명 규칙: `<앱>.thatsmycodename.com`. 내부 전용(Tailscale)과 공개(Cloudflare Tunnel) 모두 같은 도메인을 쓰되 DNS 레코드 대상만 다르게 한다
+- 와일드카드 인증서: `*.thatsmycodename.com` 하나를 cert-manager로 발급해 Traefik 기본 인증서로 사용
+
 ## 1. 목표와 원칙
 
 - **단일 진실 공급원**: 이 레포에 없는 설정은 존재하지 않는 것으로 본다. 수동 `kubectl apply`, 콘솔 클릭은 금지.
@@ -27,7 +34,7 @@
 | 시크릿 | SOPS + age (Argo CD에는 KSOPS 플러그인) | 외부 서비스 의존 없음. 대안: External Secrets Operator + 1Password/Bitwarden |
 | 스토리지 | local-path-provisioner (k3s 기본) | 단일 노드라 분산 스토리지 불필요. VM 디스크를 외부 SSD에 둘지 결정 필요 |
 | 백업 | Velero + restic → 외부 디스크 또는 Backblaze B2 | PV + 매니페스트 백업 |
-| Terraform 상태 | HCP Terraform(무료 티어) 또는 Cloudflare R2(S3 호환) | 로컬 state는 노트북 분실 시 끝남 |
+| Terraform 상태 | Cloudflare R2 (s3 백엔드, `use_lockfile`) | 이미 있는 계정, 무료 10GB. HCP Terraform은 원격 실행이 기본이라 Tailscale 뒤 클러스터에 못 붙는 함정이 있음. 루트 디렉터리별 state key 분리 |
 | 관측 | kube-prometheus-stack + Loki + Grafana(SSO) | 표준 조합 |
 
 결정이 바뀌면 이 표를 갱신하고, 필요하면 `docs/adr/`에 기록한다.
@@ -64,11 +71,14 @@ homelab-gitops/
 각 단계는 "완료 기준"을 만족해야 다음으로 넘어간다.
 
 ### Phase 0. 준비 및 결정 (반나절)
-- [ ] 도메인 확보 및 Cloudflare로 네임서버 이전
-- [ ] 계정 준비: Cloudflare, Tailscale, GitHub, HCP Terraform(또는 R2)
-- [ ] Mac mini 스펙 확인 (RAM 8GB면 VM에 5~6GB, 16GB면 10~12GB 할당 기준)
+- [x] 도메인 확보: `thatsmycodename.com` (Cloudflare Registrar에서 구매, DNS도 Cloudflare)
+- [x] 계정 준비: Cloudflare, Tailscale, GitHub 모두 완료
+- [x] Terraform 상태 백엔드: Cloudflare R2 `tfstate` 버킷 + API 토큰 생성, direnv(`.envrc`)로 주입, `terraform init` 연결 확인 완료
+- [x] Mac mini 스펙 확인: M1, RAM 16GB → Lima VM에 CPU 4, 메모리 10GB, 디스크 100GB 할당 기준. macOS 호스트에 6GB 남김
 - [ ] 위 ADR 표의 선택 확정
-- [ ] 레포 `git init`, 위 구조의 빈 디렉터리와 README, `.gitignore`(tfstate, kubeconfig, age key) 생성
+- [x] 레포 `git init`
+- [x] 위 구조의 빈 디렉터리와 README, `.gitignore`, `.mise.toml`(terraform 1.17.1 고정) 생성
+- [ ] 뼈대(README, .gitignore, .mise.toml, .envrc.example, 디렉터리)를 커밋하고 GitHub에 push
 - 완료 기준: 레포가 GitHub에 올라가 있고, 결정 사항이 이 문서에 반영됨
 
 ### Phase 1. Mac mini 호스트 세팅 (하루)
@@ -76,7 +86,7 @@ homelab-gitops/
 - [ ] 원격 로그인(SSH) 켜기, 키 기반 인증만 허용
 - [ ] Tailscale 설치 → 노트북에서 Tailscale IP로 SSH 가능 확인
 - [ ] `bootstrap/Brewfile` + `bootstrap.sh`로 lima, kubectl, helm, sops, age 설치
-- [ ] Lima VM 정의(`lima/k3s.yaml`): CPU/메모리/디스크, 포트포워딩(80, 443, 6443), k3s 설치 provision 스크립트
+- [ ] Lima VM 정의(`lima/k3s.yaml`): CPU 4 / 메모리 10GiB / 디스크 100GiB, 포트포워딩(80, 443, 6443), k3s 설치 provision 스크립트
 - [ ] launchd로 재부팅 시 Lima VM 자동 시작
 - 완료 기준: Mac mini를 재부팅해도 손대지 않고 VM과 k3s가 올라옴. 노트북에서 Tailscale 경유로 `kubectl get nodes` 성공
 
@@ -94,11 +104,11 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 - [ ] Traefik 설정(HelmChartConfig) — 기본 TLS, 리다이렉트
 - [ ] KSOPS 플러그인으로 암호화된 Secret 복호화 확인
 - [ ] metrics-server, reloader
-- [ ] Argo CD 자체를 Ingress + TLS로 노출 (`argocd.<domain>`, Tailscale 내부 전용)
+- [ ] Argo CD 자체를 Ingress + TLS로 노출 (`argocd.thatsmycodename.com`, Tailscale 내부 전용)
 - 완료 기준: 테스트 앱(whoami) 하나를 `kubernetes/apps/`에 커밋하면 DNS, 인증서, Ingress까지 자동으로 생겨 브라우저에서 HTTPS로 열림
 
 ### Phase 4. SSO (이틀)
-- [ ] Authentik 배포 (Helm, PostgreSQL + Redis 포함), Ingress `auth.<domain>`
+- [ ] Authentik 배포 (Helm, PostgreSQL + Redis 포함), Ingress `auth.thatsmycodename.com`
 - [ ] 초기 admin 부트스트랩 비밀번호/토큰은 SOPS로 관리
 - [ ] `terraform/20-authentik`: Authentik provider로 그룹, OIDC 프로바이더, 애플리케이션 정의 (Argo CD, Grafana)
 - [ ] Argo CD OIDC 연동 (Dex 또는 직접 OIDC), RBAC을 Authentik 그룹에 매핑
@@ -130,7 +140,7 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 
 ## 5. 주의할 점 / 리스크
 
-- **M1 Mac mini 메모리**: 8GB 모델이면 Authentik + 모니터링까지 올리면 빠듯하다. Lima VM 메모리와 Prometheus retention을 보수적으로 잡고, 필요하면 Loki/Prometheus를 나중에.
+- **M1 Mac mini 메모리(16GB)**: VM에 10GB를 주면 k3s 시스템 + Argo CD + Authentik + 모니터링까지 여유 있게 올라간다. 다만 Immich, Jellyfin 같은 무거운 앱을 더하면 Prometheus retention과 리소스 limit을 신경 써야 한다. VM 메모리는 나중에 `limactl edit`으로 늘릴 수 있다.
 - **macOS 재부팅 통제**: 자동 업데이트를 끄지 않으면 예고 없이 재부팅되어 VM이 내려간다. launchd 자동 시작이 반드시 동작해야 한다.
 - **Lima 네트워크**: 기본은 사용자 모드 네트워크라 포트포워딩 경유. LAN 장치가 직접 접근해야 하면(Home Assistant mDNS 등) `socket_vmnet` 브리지 모드 검토.
 - **Terraform ↔ GitOps 경계**: Terraform이 클러스터 안 리소스를 직접 만지기 시작하면 두 도구가 서로 덮어쓴다. Terraform은 Argo CD 설치와 시크릿 주입까지만.

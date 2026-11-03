@@ -1,0 +1,20 @@
+# 이 파일을 .envrc 로 복사하고 값을 채운 뒤 `direnv allow` 실행.
+# .envrc 는 .gitignore 에 있어 커밋되지 않음.
+
+# Cloudflare R2 (Terraform s3 백엔드)
+export AWS_ACCESS_KEY_ID=''
+export AWS_SECRET_ACCESS_KEY=''
+export CLOUDFLARE_ACCOUNT_ID=''
+
+# Cloudflare provider (DNS, Tunnel) - Phase 2 에서 발급
+export CLOUDFLARE_API_TOKEN=''
+
+# Tailscale provider - Phase 2 에서 발급
+export TAILSCALE_API_KEY=''
+export TAILSCALE_TAILNET=''
+
+# SOPS age 개인 키 경로 - Phase 2 에서 생성
+export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
+
+# 클러스터 kubeconfig - Phase 1 이후
+export KUBECONFIG="$PWD/kubeconfig"
