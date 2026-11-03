@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- 로그인 시 Lima k3s VM 자동 시작. bootstrap.sh 가 __HOME__ 을 치환해 ~/Library/LaunchAgents 에 설치 -->
+  <key>Label</key>
+  <string>com.homelab.lima-k3s</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/limactl</string>
+    <string>start</string>
+    <string>--tty=false</string>
+    <string>k3s</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>HOME</key>
+    <string>__HOME__</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- limactl start 는 VM 을 띄우고 종료하므로 KeepAlive 는 끈다 -->
+  <key>KeepAlive</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>__HOME__/Library/Logs/lima-k3s.log</string>
+  <key>StandardErrorPath</key>
+  <string>__HOME__/Library/Logs/lima-k3s.log</string>
+</dict>
+</plist>

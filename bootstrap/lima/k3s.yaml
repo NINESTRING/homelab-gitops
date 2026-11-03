@@ -1,0 +1,78 @@
+# Lima VM: k3s 단일 노드 (M1 Mac mini 16GB 기준)
+#
+# 최초 생성:  limactl start --name=k3s --tty=false --param tlsSan=<MagicDNS>,<TailscaleIP> bootstrap/lima/k3s.yaml
+# 이후 시작:  limactl start k3s
+# 셸 접속:    limactl shell k3s
+# 리소스 변경: limactl edit k3s  (재시작 필요)
+#
+# bootstrap.sh 가 위 명령을 대신 실행한다.
+
+minimumLimaVersion: 2.0.0
+base: template:_images/ubuntu-lts   # Ubuntu LTS arm64 cloud image
+
+cpus: 4
+memory: "10GiB"
+disk: "100GiB"
+
+# 호스트 디렉터리 마운트 없음. 백업 대상 디스크가 생기면 여기에 추가.
+mounts: []
+
+# containerd 는 k3s 가 직접 관리
+containerd:
+  system: false
+  user: false
+
+# 호스트 포트 노출. hostIP 0.0.0.0 이라 Tailscale 과 LAN 양쪽에서 접근 가능.
+# 공유기 포트포워딩은 하지 않으므로 WAN 에는 열리지 않음.
+portForwards:
+  - guestPort: 6443   # Kubernetes API
+    hostPort: 6443
+    hostIP: "0.0.0.0"
+  - guestPort: 80     # Traefik HTTP
+    hostPort: 80
+    hostIP: "0.0.0.0"
+  - guestPort: 443    # Traefik HTTPS
+    hostPort: 443
+    hostIP: "0.0.0.0"
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/sh
+      set -eu
+      if [ ! -d /var/lib/rancher/k3s ]; then
+        # kubeconfig 는 Lima 사용자 그룹만 읽게 함 (copyToHost 가 그 사용자로 읽어감)
+        KUBE_GROUP="$(id -gn {{.User}})"
+        curl -sfL https://get.k3s.io | \
+          INSTALL_K3S_CHANNEL="{{.Param.k3sChannel}}" \
+          INSTALL_K3S_EXEC="server \
+            --write-kubeconfig-mode 640 \
+            --write-kubeconfig-group $KUBE_GROUP \
+            --tls-san {{.Param.tlsSan}}" \
+          sh -
+      fi
+
+probes:
+  - script: |
+      #!/bin/bash
+      set -eux -o pipefail
+      if ! timeout 120s bash -c "until test -f /etc/rancher/k3s/k3s.yaml; do sleep 3; done"; then
+        echo >&2 "k3s is not running yet"
+        exit 1
+      fi
+    hint: |
+      k3s kubeconfig 가 아직 없습니다.
+      limactl shell k3s sudo journalctl -u k3s 로 로그를 확인하세요.
+
+# VM 안의 kubeconfig 를 호스트로 복사 (server 는 127.0.0.1:6443 으로 적혀 있음)
+copyToHost:
+  - guest: "/etc/rancher/k3s/k3s.yaml"
+    host: "{{.Dir}}/copied-from-guest/kubeconfig.yaml"
+    skipIfMissing: true
+    deleteOnStop: true
+
+param:
+  # k3s API 인증서에 추가할 SAN. Tailscale MagicDNS 이름과 IP 를 콤마로 구분.
+  tlsSan: "127.0.0.1"
+  # k3s 릴리스 채널. 특정 버전 고정은 INSTALL_K3S_VERSION 으로 바꾸면 됨.
+  k3sChannel: "stable"

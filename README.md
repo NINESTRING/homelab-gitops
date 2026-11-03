@@ -37,3 +37,25 @@ direnv allow
 ```
 
 `.envrc` 는 커밋되지 않는다. 새 변수가 필요해지면 `.envrc.example` 에도 빈 값으로 추가한다.
+
+## Phase 1: Mac mini 부트스트랩
+
+Mac mini 에서 (자동 로그인 설정, Tailscale 앱 로그인 후):
+
+```sh
+git clone git@github.com:NINESTRING/homelab-gitops.git ~/homelab-gitops
+cd ~/homelab-gitops && ./bootstrap/bootstrap.sh
+```
+
+스크립트가 하는 일: 절전/자동 업데이트 해제, SSH 켜기, Homebrew + `bootstrap/Brewfile`,
+Lima VM `k3s` 생성(`bootstrap/lima/k3s.yaml`, Tailscale 주소를 API 인증서 SAN 에 포함),
+로그인 시 VM 자동 시작 LaunchAgent, 레포 루트에 `kubeconfig` 생성.
+
+노트북에서:
+
+```sh
+scp <user>@<macmini-magicdns>:~/homelab-gitops/kubeconfig ./kubeconfig
+kubectl get nodes   # direnv 가 KUBECONFIG=$PWD/kubeconfig 를 잡음
+```
+
+VM 운영: `limactl shell k3s`, `limactl stop k3s`, `limactl edit k3s`(리소스 변경), 로그 `~/Library/Logs/lima-k3s.log`

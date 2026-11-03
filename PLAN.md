@@ -85,9 +85,10 @@ homelab-gitops/
 - [ ] macOS 초기 설정: 자동 로그인, `pmset`으로 절전/디스플레이 슬립 끄기, 정전 후 자동 재시동, 자동 업데이트 끄기(재부팅 통제)
 - [ ] 원격 로그인(SSH) 켜기, 키 기반 인증만 허용
 - [ ] Tailscale 설치 → 노트북에서 Tailscale IP로 SSH 가능 확인
-- [ ] `bootstrap/Brewfile` + `bootstrap.sh`로 lima, kubectl, helm, sops, age 설치
-- [ ] Lima VM 정의(`lima/k3s.yaml`): CPU 4 / 메모리 10GiB / 디스크 100GiB, 포트포워딩(80, 443, 6443), k3s 설치 provision 스크립트
-- [ ] launchd로 재부팅 시 Lima VM 자동 시작
+- [x] `bootstrap/Brewfile` + `bootstrap.sh` 작성 (lima, kubectl, helm, sops, age, jq, tailscale-app). pmset/자동 업데이트/SSH 설정 포함
+- [x] Lima VM 정의(`lima/k3s.yaml`) 작성: CPU 4 / 메모리 10GiB / 디스크 100GiB, 포트포워딩(80, 443, 6443), k3s 설치 provision, `--tls-san` 을 param 으로 주입
+- [x] launchd LaunchAgent plist 작성, bootstrap.sh 가 설치
+- [ ] Mac mini 에서 `bootstrap.sh` 실행
 - 완료 기준: Mac mini를 재부팅해도 손대지 않고 VM과 k3s가 올라옴. 노트북에서 Tailscale 경유로 `kubectl get nodes` 성공
 
 ### Phase 2. Terraform 기반 + GitOps 부트스트랩 (하루)

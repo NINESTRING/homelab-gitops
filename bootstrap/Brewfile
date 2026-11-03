@@ -1,0 +1,8 @@
+# Mac mini 호스트용 도구. `brew bundle --file=bootstrap/Brewfile`
+brew "lima"            # Linux VM (k3s 가 안에서 돎)
+brew "kubernetes-cli"  # kubectl
+brew "helm"
+brew "sops"
+brew "age"
+brew "jq"
+cask "tailscale-app"   # GUI 앱. 로그인은 수동
