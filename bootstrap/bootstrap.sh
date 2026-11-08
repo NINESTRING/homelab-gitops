@@ -4,10 +4,10 @@
 # 사전 조건 (수동):
 #   1. macOS 초기 설정 완료, 이 사용자로 자동 로그인 설정 (시스템 설정 > 사용자 및 그룹)
 #   2. Tailscale 앱 설치 후 로그인 (없으면 이 스크립트가 설치만 해줌)
-#   3. 이 레포를 clone: git clone git@github.com:NINESTRING/homelab-gitops.git ~/homelab-gitops
+#   3. 이 레포를 clone: git clone git@github.com:NINESTRING/homelab-gitops.git ~/code/personal/homelab-gitops
 #
 # 실행:
-#   cd ~/homelab-gitops && ./bootstrap/bootstrap.sh
+#   cd ~/code/personal/homelab-gitops && ./bootstrap/bootstrap.sh
 #
 # 결과:
 #   - 절전/자동 업데이트 해제, SSH 활성화
@@ -15,7 +15,7 @@
 #   - Lima VM "k3s" 생성 및 시작 (Tailscale 주소를 API 인증서 SAN 에 포함)
 #   - 로그인 시 VM 자동 시작 LaunchAgent 등록
 #   - 레포 루트에 kubeconfig 생성 (gitignore 됨). 노트북에서:
-#       scp <macmini>:~/homelab-gitops/kubeconfig ./kubeconfig
+#       scp <macmini>:~/code/personal/homelab-gitops/kubeconfig ./kubeconfig
 
 set -euo pipefail
 

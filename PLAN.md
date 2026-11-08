@@ -78,18 +78,20 @@ homelab-gitops/
 - [ ] 위 ADR 표의 선택 확정
 - [x] 레포 `git init`
 - [x] 위 구조의 빈 디렉터리와 README, `.gitignore`, `.mise.toml`(terraform 1.17.1 고정) 생성
-- [ ] 뼈대(README, .gitignore, .mise.toml, .envrc.example, 디렉터리)를 커밋하고 GitHub에 push
+- [x] 뼈대(README, .gitignore, .mise.toml, .envrc.example, 디렉터리)를 커밋하고 GitHub에 push
 - 완료 기준: 레포가 GitHub에 올라가 있고, 결정 사항이 이 문서에 반영됨
 
 ### Phase 1. Mac mini 호스트 세팅 (하루)
-- [ ] macOS 초기 설정: 자동 로그인, `pmset`으로 절전/디스플레이 슬립 끄기, 정전 후 자동 재시동, 자동 업데이트 끄기(재부팅 통제)
-- [ ] 원격 로그인(SSH) 켜기, 키 기반 인증만 허용
-- [ ] Tailscale 설치 → 노트북에서 Tailscale IP로 SSH 가능 확인
+- [x] macOS 초기 설정: 자동 로그인, `pmset`으로 절전/디스플레이 슬립 끄기, 정전 후 자동 재시동, 자동 업데이트 끄기(재부팅 통제) — FileVault 를 꺼야 자동 로그인이 가능했음 (2026-11-08)
+- [x] 원격 로그인(SSH) 켜기, 키 기반 인증만 허용 (2026-11-08, `sshd_config.d/10-homelab.conf` 적용 확인)
+- [x] Tailscale 설치 → 노트북에서 Tailscale IP로 SSH 가능 확인 (`ninestring-macmini.tail6b0fe2.ts.net`, 100.79.246.17)
 - [x] `bootstrap/Brewfile` + `bootstrap.sh` 작성 (lima, kubectl, helm, sops, age, jq, tailscale-app). pmset/자동 업데이트/SSH 설정 포함
 - [x] Lima VM 정의(`lima/k3s.yaml`) 작성: CPU 4 / 메모리 10GiB / 디스크 100GiB, 포트포워딩(80, 443, 6443), k3s 설치 provision, `--tls-san` 을 param 으로 주입
 - [x] launchd LaunchAgent plist 작성, bootstrap.sh 가 설치
-- [ ] Mac mini 에서 `bootstrap.sh` 실행
-- 완료 기준: Mac mini를 재부팅해도 손대지 않고 VM과 k3s가 올라옴. 노트북에서 Tailscale 경유로 `kubectl get nodes` 성공
+- [x] Mac mini 에서 `bootstrap.sh` 실행 (2026-11-08. 노트북에서 Tailscale 경유 6443 응답, 인증서 SAN에 MagicDNS/IP 포함, 80/443 열림 확인)
+- [x] 노트북에 kubeconfig 복사 후 `kubectl get nodes` 성공 (2026-11-08, lima-k3s Ready, k3s v1.37.2)
+- [x] 재부팅 테스트: 손대지 않고 VM/k3s 복귀 확인 (2026-11-08. 1차는 FileVault 로 로그인 화면에서 멈춤. FileVault 끄고 자동 로그인 설정 후 2차: 재부팅 명령 → API 다운 → 약 50초 만에 노드 Ready 복귀)
+- 완료 기준: Mac mini를 재부팅해도 손대지 않고 VM과 k3s가 올라옴. 노트북에서 Tailscale 경유로 `kubectl get nodes` 성공 — **충족 (2026-11-08)**
 
 ### Phase 2. Terraform 기반 + GitOps 부트스트랩 (하루)
 - [ ] `terraform/00-foundation`: 원격 state 백엔드, Cloudflare zone 데이터, 기본 DNS 레코드, Tailscale ACL
@@ -143,6 +145,7 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 
 - **M1 Mac mini 메모리(16GB)**: VM에 10GB를 주면 k3s 시스템 + Argo CD + Authentik + 모니터링까지 여유 있게 올라간다. 다만 Immich, Jellyfin 같은 무거운 앱을 더하면 Prometheus retention과 리소스 limit을 신경 써야 한다. VM 메모리는 나중에 `limactl edit`으로 늘릴 수 있다.
 - **macOS 재부팅 통제**: 자동 업데이트를 끄지 않으면 예고 없이 재부팅되어 VM이 내려간다. launchd 자동 시작이 반드시 동작해야 한다.
+- **FileVault 와 자동 로그인은 양립 불가**: FileVault 가 켜져 있으면 부팅 후 로그인 화면에서 멈추고, Tailscale 앱도 사용자 세션에서 돌기 때문에 원격으로 풀 방법이 없다. 홈서버 용도이므로 FileVault 를 끄고 자동 로그인을 건다. 물리 도난 시 디스크가 평문인 점은 감수하고, 민감한 데이터는 클러스터 안에서 SOPS/앱 레벨 암호화로 다룬다.
 - **Lima 네트워크**: 기본은 사용자 모드 네트워크라 포트포워딩 경유. LAN 장치가 직접 접근해야 하면(Home Assistant mDNS 등) `socket_vmnet` 브리지 모드 검토.
 - **Terraform ↔ GitOps 경계**: Terraform이 클러스터 안 리소스를 직접 만지기 시작하면 두 도구가 서로 덮어쓴다. Terraform은 Argo CD 설치와 시크릿 주입까지만.
 - **age 개인 키 분실 = 모든 시크릿 분실**: 패스워드 매니저 + 오프라인 백업 두 곳에 보관.
@@ -150,6 +153,7 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 
 ## 6. 바로 다음 할 일
 
-1. Phase 0 체크리스트 처리 (도메인, 계정, Mac mini 스펙 확인)
-2. 레포 구조 생성 + `.gitignore` + README 뼈대
-3. `bootstrap/lima/k3s.yaml`과 `bootstrap.sh` 작성 후 Mac mini에서 Phase 1 진행
+1. Phase 0 잔여: ADR 표 선택 확정 (스토리지 디스크 위치, 백업 대상)
+2. Phase 2: `terraform/00-foundation` (R2 백엔드, Cloudflare zone, 기본 DNS, Tailscale ACL)
+3. Phase 2: age 키 생성 + `.sops.yaml`
+4. Phase 2: `terraform/10-cluster-bootstrap` (Argo CD, age Secret, root App)

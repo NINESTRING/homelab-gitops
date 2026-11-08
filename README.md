@@ -40,11 +40,18 @@ direnv allow
 
 ## Phase 1: Mac mini 부트스트랩
 
-Mac mini 에서 (자동 로그인 설정, Tailscale 앱 로그인 후):
+노트북에서 먼저 SSH 키를 넣어 둔다. 키가 있어야 `bootstrap.sh` 가 비밀번호 인증을 끈다.
+`~/.ssh/config` 에 `IdentitiesOnly yes` 가 있으면 Mac mini 용 `Host` 항목에 `IdentityFile` 을 명시해야 한다.
 
 ```sh
-git clone git@github.com:NINESTRING/homelab-gitops.git ~/homelab-gitops
-cd ~/homelab-gitops && ./bootstrap/bootstrap.sh
+ssh-copy-id -i ~/.ssh/<key>.pub <user>@<macmini-magicdns>
+```
+
+Mac mini 에서 (FileVault 끄기 → 자동 로그인 설정 → Tailscale 앱 로그인 후. FileVault 가 켜져 있으면 자동 로그인 항목이 잠겨 있고, 재부팅 후 로그인 화면에서 멈춰 원격으로 풀 수 없다):
+
+```sh
+git clone git@github.com:NINESTRING/homelab-gitops.git ~/code/personal/homelab-gitops
+cd ~/code/personal/homelab-gitops && ./bootstrap/bootstrap.sh
 ```
 
 스크립트가 하는 일: 절전/자동 업데이트 해제, SSH 켜기, Homebrew + `bootstrap/Brewfile`,
@@ -54,8 +61,10 @@ Lima VM `k3s` 생성(`bootstrap/lima/k3s.yaml`, Tailscale 주소를 API 인증�
 노트북에서:
 
 ```sh
-scp <user>@<macmini-magicdns>:~/homelab-gitops/kubeconfig ./kubeconfig
+scp <user>@<macmini-magicdns>:~/code/personal/homelab-gitops/kubeconfig ./kubeconfig
 kubectl get nodes   # direnv 가 KUBECONFIG=$PWD/kubeconfig 를 잡음
 ```
+
+`bootstrap.sh` 는 `sudo` 를 쓰므로 원격에서 돌릴 때는 `ssh -t` 로 tty 를 붙여야 비밀번호를 입력할 수 있다.
 
 VM 운영: `limactl shell k3s`, `limactl stop k3s`, `limactl edit k3s`(리소스 변경), 로그 `~/Library/Logs/lima-k3s.log`
