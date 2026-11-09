@@ -6,3 +6,4 @@ brew "sops"
 brew "age"
 brew "jq"
 cask "tailscale-app"   # GUI 앱. 로그인은 수동
+brew "node_exporter"   # macOS 호스트 메트릭 (Prometheus 가 192.168.5.2:9100 으로 수집)

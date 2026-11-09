@@ -122,6 +122,10 @@ chmod 600 "$REPO_DIR/kubeconfig"
 export KUBECONFIG="$REPO_DIR/kubeconfig"
 kubectl get nodes
 
+# ---------------------------------------------------------------- 7.5 호스트 node_exporter
+log "node_exporter 서비스 시작 (호스트 메트릭, :9100)"
+brew services start node_exporter >/dev/null
+
 # ---------------------------------------------------------------- 8. LaunchAgent
 log "로그인 시 VM 자동 시작 LaunchAgent 등록"
 PLIST_DST="$HOME/Library/LaunchAgents/$LAUNCH_AGENT_LABEL.plist"
