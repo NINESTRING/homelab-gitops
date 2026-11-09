@@ -1,8 +1,9 @@
 crds:
   enabled: true
   keep: true   # 앱 삭제 시 CRD 와 함께 모든 인증서가 날아가는 것 방지
-# DNS-01 검증 시 Cloudflare 네임서버에 직접 물어 전파 지연을 줄인다
-dns01RecursiveNameservers: "1.1.1.1:53,1.0.0.1:53"
+# DNS-01 검증 시 공용 리졸버에 직접 물어 전파 지연을 줄인다.
+# 1.1.1.1 은 집 네트워크(Mac mini)에서 막혀 있어(2026-11-09 확인) 1.0.0.1 과 8.8.8.8 을 쓴다.
+dns01RecursiveNameservers: "1.0.0.1:53,8.8.8.8:53"
 dns01RecursiveNameserversOnly: true
 resources:
   requests: { cpu: 10m, memory: 32Mi }
