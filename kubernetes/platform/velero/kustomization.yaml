@@ -1,0 +1,17 @@
+# Velero: 매니페스트 + PV(파일시스템, kopia) 를 Cloudflare R2 `velero` 버킷에 매일 백업.
+# R2 자격 증명은 velero-r2.sops.yaml (키 cloud = AWS 자격 증명 파일 형식).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: velero
+resources:
+  - namespace.yaml
+generators:
+  - secret-generator.yaml
+helmCharts:
+  - name: velero
+    repo: https://vmware-tanzu.github.io/helm-charts
+    version: 12.2.3
+    releaseName: velero
+    namespace: velero
+    includeCRDs: true
+    valuesFile: values.yaml

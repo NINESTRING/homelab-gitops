@@ -1,0 +1,18 @@
+# kube-prometheus-stack: Prometheus, Alertmanager(Telegram), Grafana(Authentik OIDC), node-exporter, kube-state-metrics.
+# 시크릿: grafana-secrets.sops.yaml(관리자/OIDC), alertmanager-config.sops.yaml(Telegram 봇 토큰 포함 전체 설정).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: monitoring
+resources:
+  - namespace.yaml
+  - rules-homelab.yaml
+generators:
+  - secret-generator.yaml
+helmCharts:
+  - name: kube-prometheus-stack
+    repo: https://prometheus-community.github.io/helm-charts
+    version: 93.0.0
+    releaseName: kps
+    namespace: monitoring
+    includeCRDs: true
+    valuesFile: values.yaml

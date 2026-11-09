@@ -120,12 +120,12 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 - 완료 기준: Argo CD와 whoami가 Authentik 로그인 한 번으로 열림. 새 앱 추가 시 Terraform 리소스 하나 + Ingress 어노테이션만으로 SSO 적용 — **충족 (2026-11-09)**
 
 ### Phase 5. 관측과 백업 (이틀)
-- [ ] kube-prometheus-stack, Grafana OIDC(Authentik) 연동
-- [ ] Loki + Promtail(또는 Alloy)
-- [ ] 알림: Alertmanager → Discord/Slack/Telegram 중 하나
-- [ ] Velero + restic, 외부 디스크 또는 B2 대상, 일일 스케줄
+- [ ] kube-prometheus-stack 93.0.0, Grafana OIDC(Authentik) 연동 — 매니페스트·Authentik 프로바이더 적용(2026-11-09), 기동 확인 남음
+- [ ] Loki 7.5.0 + Alloy 1.15.0 — 매니페스트(2026-11-09), 기동 확인 남음
+- [ ] 알림: Alertmanager → Telegram (2026-11-09 결정·설정. 회사 Slack 은 개인 인프라 정보 유출/통제권 문제로 배제). 수신 확인 남음
+- [ ] Velero 1.18 + kopia → R2 `velero`, 매일 03:00 KST, 30일 보관 — 매니페스트(2026-11-09), 첫 백업 확인 남음
 - [ ] 복구 리허설: 네임스페이스 하나 지우고 복구해보기
-- [ ] 호스트 모니터링: node-exporter를 macOS 호스트에도 (Homebrew) 설치
+- [ ] 호스트 모니터링: node_exporter 를 macOS 호스트에 (Homebrew, 루프백 바인딩) — Brewfile/bootstrap.sh 반영(2026-11-09). Mac mini 에서 bootstrap.sh 재실행 남음
 - 완료 기준: 디스크/메모리 알림이 오고, 백업 복구를 실제로 한 번 성공함
 
 ### Phase 6. 애플리케이션 (지속)

@@ -1,0 +1,110 @@
+# ---------------------------------------------------------------- k3s 에 없는 컴포넌트 끔 (false alert 방지)
+kubeControllerManager: { enabled: false }
+kubeScheduler: { enabled: false }
+kubeProxy: { enabled: false }
+kubeEtcd: { enabled: false }
+defaultRules:
+  rules:
+    etcd: false
+    kubeControllerManager: false
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+    kubeProxy: false
+
+# ---------------------------------------------------------------- Prometheus
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    retentionSize: 8GB
+    walCompression: true
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 10Gi
+    resources:
+      requests: { cpu: 100m, memory: 512Mi }
+      limits: { memory: 1536Mi }
+    # 다른 앱(velero, cert-manager, loki)의 ServiceMonitor/PrometheusRule 도 전부 수집
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    scrapeConfigSelectorNilUsesHelmValues: false
+    # macOS 호스트의 node_exporter (Homebrew). Lima 사용자 모드 네트워크에서 호스트는 192.168.5.2
+    additionalScrapeConfigs:
+      - job_name: macmini-host
+        static_configs:
+          - targets: ["192.168.5.2:9100"]
+            labels: { instance: macmini }
+
+# ---------------------------------------------------------------- Alertmanager
+alertmanager:
+  alertmanagerSpec:
+    # 설정 전체(Telegram 토큰 포함)를 SOPS Secret alertmanager-config 의 alertmanager.yaml 키에서 읽는다
+    useExistingSecret: true
+    configSecret: alertmanager-config
+    retention: 120h
+    resources:
+      requests: { cpu: 10m, memory: 64Mi }
+      limits: { memory: 128Mi }
+
+# ---------------------------------------------------------------- Grafana
+grafana:
+  admin:
+    existingSecret: grafana-secrets
+    userKey: GF_SECURITY_ADMIN_USER
+    passwordKey: GF_SECURITY_ADMIN_PASSWORD
+  envFromSecret: grafana-secrets   # GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET
+  grafana.ini:
+    server:
+      root_url: https://grafana.thatsmycodename.com
+    auth:
+      disable_login_form: false   # 비상용 로컬 admin 유지
+    auth.generic_oauth:
+      enabled: true
+      name: Authentik
+      client_id: grafana
+      scopes: openid profile email
+      auth_url: https://auth.thatsmycodename.com/application/o/authorize/
+      token_url: https://auth.thatsmycodename.com/application/o/token/
+      api_url: https://auth.thatsmycodename.com/application/o/userinfo/
+      allow_sign_up: true
+      use_pkce: true
+      # Authentik admins 그룹 → Grafana Admin, 그 외 Viewer
+      role_attribute_path: contains(groups[*], 'admins') && 'Admin' || 'Viewer'
+      role_attribute_strict: false
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      external-dns.kubernetes.io/target: macmini.thatsmycodename.com
+    hosts: [grafana.thatsmycodename.com]
+  persistence:
+    enabled: true
+    size: 2Gi
+  resources:
+    requests: { cpu: 50m, memory: 192Mi }
+    limits: { memory: 384Mi }
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      uid: loki
+      access: proxy
+      url: http://loki.logging.svc.cluster.local:3100
+
+# ---------------------------------------------------------------- 기타 리소스 제한
+prometheusOperator:
+  resources:
+    requests: { cpu: 20m, memory: 64Mi }
+    limits: { memory: 256Mi }
+kube-state-metrics:
+  resources:
+    requests: { cpu: 10m, memory: 48Mi }
+    limits: { memory: 128Mi }
+prometheus-node-exporter:
+  resources:
+    requests: { cpu: 10m, memory: 24Mi }
+    limits: { memory: 64Mi }

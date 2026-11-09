@@ -1,0 +1,52 @@
+# 홈랩 전용 알림. 기본 kube-prometheus 룰에 더해 macOS 호스트 디스크/메모리와 Velero 백업 실패를 감시한다.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: homelab
+  namespace: monitoring
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  groups:
+    - name: homelab.host
+      rules:
+        - alert: MacMiniDiskAlmostFull
+          expr: (1 - node_filesystem_avail_bytes{job="macmini-host",mountpoint="/System/Volumes/Data"} / node_filesystem_size_bytes{job="macmini-host",mountpoint="/System/Volumes/Data"}) > 0.8
+          for: 15m
+          labels: { severity: warning }
+          annotations:
+            summary: "Mac mini 디스크 사용량 {{ $value | humanizePercentage }}"
+        - alert: MacMiniMemoryPressure
+          expr: (1 - node_memory_free_bytes{job="macmini-host"} / node_memory_total_bytes{job="macmini-host"}) > 0.95
+          for: 15m
+          labels: { severity: warning }
+          annotations:
+            summary: "Mac mini 메모리 사용량 {{ $value | humanizePercentage }}"
+        - alert: MacMiniHostExporterDown
+          expr: up{job="macmini-host"} == 0
+          for: 10m
+          labels: { severity: warning }
+          annotations:
+            summary: "Mac mini node_exporter 수집 실패 (brew services 확인)"
+    - name: homelab.cluster
+      rules:
+        - alert: VMDiskAlmostFull
+          expr: (1 - node_filesystem_avail_bytes{job="node-exporter",mountpoint="/"} / node_filesystem_size_bytes{job="node-exporter",mountpoint="/"}) > 0.8
+          for: 15m
+          labels: { severity: warning }
+          annotations:
+            summary: "k3s VM 디스크 사용량 {{ $value | humanizePercentage }}"
+    - name: homelab.backup
+      rules:
+        - alert: VeleroBackupFailed
+          expr: increase(velero_backup_failure_total[24h]) > 0 or increase(velero_backup_partial_failure_total[24h]) > 0
+          for: 5m
+          labels: { severity: critical }
+          annotations:
+            summary: "Velero 백업 실패 ({{ $labels.schedule }})"
+        - alert: VeleroBackupStale
+          expr: time() - velero_backup_last_successful_timestamp{schedule!=""} > 60 * 60 * 36
+          for: 1h
+          labels: { severity: critical }
+          annotations:
+            summary: "Velero 백업이 36시간 넘게 성공하지 않음 ({{ $labels.schedule }})"

@@ -140,6 +140,24 @@ OIDC 를 모르는 앱 보호 (forward auth):
 
 OIDC 를 지원하는 앱: `argocd.tf` 처럼 `authentik_provider_oauth2` + `authentik_application`, 클라이언트 시크릿은 SOPS 파일에 두고 양쪽에서 읽는다.
 
+## Phase 5: 관측과 백업
+
+| 위치 | 역할 |
+|---|---|
+| `kubernetes/platform/monitoring` | kube-prometheus-stack. Prometheus 7일, Grafana(`grafana.thatsmycodename.com`, Authentik 로그인, admins → Admin), Alertmanager → Telegram. 시크릿: `grafana-secrets.sops.yaml`, `alertmanager-config.sops.yaml`(설정 전체, 봇 토큰 포함). 홈랩 룰: `rules-homelab.yaml` |
+| `kubernetes/platform/logging` | Loki 단일 바이너리(7일, 10Gi) + Alloy. NetworkPolicy 로 Loki 접근을 Alloy/monitoring 으로 제한 |
+| `kubernetes/platform/velero` | Velero → R2 `velero` 버킷. 매일 03:00 KST, 30일 보관, kube-system/logging/whoami 제외. 시크릿: `velero-r2.sops.yaml` |
+| 호스트 | `node_exporter`(Homebrew, 127.0.0.1:9100). Prometheus 가 VM 에서 192.168.5.2:9100 으로 수집. `bootstrap.sh` 재실행으로 설치 |
+
+알림 설정 변경: `sops kubernetes/platform/monitoring/alertmanager-config.sops.yaml` 로 편집 후 커밋. reloader 가 아닌 prometheus-operator 가 Secret 변경을 감지해 재적용한다.
+
+복구 리허설:
+
+```sh
+velero backup get                       # 일일 백업 확인
+velero restore create --from-backup <name> --include-namespaces whoami
+```
+
 ## 시크릿 작성
 
 ```sh

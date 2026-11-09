@@ -1,0 +1,60 @@
+# R2 는 S3 호환이라 aws 플러그인을 쓴다. Velero 1.18 ↔ 플러그인 v1.14
+initContainers:
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.14.4
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+
+credentials:
+  useSecret: true
+  existingSecret: velero-r2   # SOPS, 키 cloud
+
+configuration:
+  backupStorageLocation:
+    - name: default
+      provider: aws
+      bucket: velero
+      default: true
+      credential:
+        name: velero-r2
+        key: cloud
+      config:
+        region: auto
+        s3ForcePathStyle: "true"
+        s3Url: https://bb2f4e7c0ae6c3ff34e0ec2df2da7c7b.r2.cloudflarestorage.com
+        checksumAlgorithm: ""   # R2 는 최신 체크섬 헤더를 지원하지 않음
+  volumeSnapshotLocation: []
+  uploaderType: kopia
+  defaultVolumesToFsBackup: true   # 스냅샷 API 가 없으므로 PV 는 파일시스템 백업
+  features: ""
+
+snapshotsEnabled: false
+deployNodeAgent: true
+nodeAgent:
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 1Gi }
+
+resources:
+  requests: { cpu: 50m, memory: 128Mi }
+  limits: { memory: 512Mi }
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+  prometheusRule:
+    enabled: false   # 홈랩 룰은 kubernetes/platform/monitoring/rules-homelab.yaml
+
+schedules:
+  daily:
+    disabled: false
+    schedule: "0 18 * * *"   # 매일 03:00 KST
+    useOwnerReferencesInBackup: false
+    template:
+      ttl: 720h   # 30일 보관
+      storageLocation: default
+      # 재생성 가능한 것(kube-system, 로그, 메트릭)은 제외. 상태가 있는 앱(authentik, grafana 등)만
+      excludedNamespaces: [kube-system, logging, whoami]
+      excludedResources: [events, events.events.k8s.io]
