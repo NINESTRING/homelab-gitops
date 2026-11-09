@@ -5,6 +5,7 @@ kind: Kustomization
 namespace: authentik
 resources:
   - namespace.yaml
+  - traefik-forward-auth.yaml
 generators:
   - secret-generator.yaml
 helmCharts:

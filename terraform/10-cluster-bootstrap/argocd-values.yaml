@@ -12,6 +12,20 @@ configs:
     kustomize.buildOptions: --enable-alpha-plugins --enable-exec --enable-helm
     # 리소스 상태 추적을 어노테이션으로 (라벨 63자 제한 회피)
     application.resourceTrackingMethod: annotation
+    # Authentik OIDC (Phase 4). 클라이언트 시크릿은 Secret argocd-oidc (kubernetes/infrastructure/argocd-config, SOPS).
+    # Authentik 쪽 프로바이더/앱은 terraform/20-authentik.
+    oidc.config: |
+      name: Authentik
+      issuer: https://auth.thatsmycodename.com/application/o/argocd/
+      clientID: argocd
+      clientSecret: $argocd-oidc:clientSecret
+      requestedScopes: ["openid", "profile", "email"]
+  # Authentik 그룹 → Argo CD 역할. admins 만 관리자, 나머지 로그인 사용자는 읽기 전용.
+  rbac:
+    policy.default: role:readonly
+    policy.csv: |
+      g, admins, role:admin
+    scopes: "[groups, email]"
 
 # ---------------------------------------------------------------- Ingress (Phase 3)
 # TLS 는 Traefik 기본 인증서(와일드카드)로 종료되므로 tls 블록 없이 둔다. Tailscale 안에서만 열림.

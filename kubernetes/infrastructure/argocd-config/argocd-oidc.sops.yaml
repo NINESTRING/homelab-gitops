@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: argocd-oidc
+    namespace: argocd
+    labels:
+        app.kubernetes.io/part-of: argocd # Argo CD 가 $argocd-oidc:clientSecret 로 참조하려면 필요
+type: Opaque
+stringData:
+    clientSecret: ENC[AES256_GCM,data:gcwmYQkCXZJ4dkBW1YJ4DtBbXlehFJw6z0cbJa//S3uIXfLup9dy4+EXwALt8UX7KkwVqr3gxc53UvqlAfukLA==,iv:EOgflBmz7LmYomGwIOen62d/HJHGmkdrQZ+RfGjW2CA=,tag:E0YyZ8R7i3yLliAg9X0Gvw==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB2V1lsaDRjdWdTSmxYeXJ3
+            Z0ZCeUhtcy9GQS9pYThGcGY3TDZEalFQaHhjClMwWk5nZnluQzFWaWFvdXNSbTgz
+            R1o3L0VsZXlteHpDUGp6UWRiZG50cWMKLS0tIHAvTndxNEdWMnFIcVQrc2F1N296
+            bzltK2l1c1U2MjA5dU9sVTBaekVLM0UKNnntCgZ5wKVBMXo/rERZ8DJ8YeloICzs
+            esDZo+7PGOGz21DA6uI3y6+RotJkThKwszvUM6ixgo8D6mf4/RVUCQ==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age195dhv5j6us0n0vmy0hhug4608tv5tgapz6h73y64e4hxgypr3u0sndle8c
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-09T04:50:28Z"
+    mac: ENC[AES256_GCM,data:aU8y6PUa9Gdr/xP0Iwd+a0Jarpi/q9rWa1xV8gPUVwcdPptaA87/KG9ZObCkT/ueTNRehQUbhbqr6/40XgHc9HN3nt1V2iSwClyI1nnZaj0TPXY9MTPma5kTL+Q4pYO+MBs2fqEsxu3i9rY/JhJf3OYBkQAbcn71Xmvj8QqHSek=,iv:iCX+7QsO3/Bw575pQYtmhwSNs9y5JV6LvCfaYJAE4HE=,tag:VJkuwN/J+I2qNdKp1duX5Q==,type:str]
+    version: 3.13.3

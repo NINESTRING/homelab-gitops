@@ -120,6 +120,26 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.pas
 kubectl kustomize --enable-helm kubernetes/apps/whoami
 ```
 
+## Phase 4: SSO (Authentik)
+
+| 위치 | 역할 |
+|---|---|
+| `kubernetes/platform/authentik` | Authentik 서버/워커/PostgreSQL. 비밀값은 `secrets.sops.yaml`(SOPS). Traefik forward auth 미들웨어 `authentik-forward-auth`, outpost 콜백 IngressRoute |
+| `kubernetes/infrastructure/argocd-config` | Argo CD OIDC 클라이언트 시크릿 `argocd-oidc` (SOPS) |
+| `terraform/20-authentik` | Authentik 안의 그룹(admins), Argo CD OIDC 프로바이더/앱, whoami proxy 프로바이더/앱 → 내장 Outpost. API 토큰과 클라이언트 시크릿은 위 SOPS 파일에서 읽음 |
+| `terraform/10-cluster-bootstrap/argocd-values.yaml` | Argo CD `oidc.config`, RBAC(admins → role:admin, 나머지 readonly) |
+
+적용 순서: Authentik 매니페스트 push → `auth.thatsmycodename.com` 기동 확인 → `terraform/20-authentik` apply → `terraform/10-cluster-bootstrap` apply (OIDC) → 앱 Ingress 에 미들웨어 어노테이션.
+
+초기 관리자: `akadmin`, 비밀번호는 `sops -d kubernetes/platform/authentik/secrets.sops.yaml` 의 `AUTHENTIK_BOOTSTRAP_PASSWORD`.
+
+OIDC 를 모르는 앱 보호 (forward auth):
+
+1. `terraform/20-authentik/whoami.tf` 를 복사해 이름/호스트 변경 후 apply
+2. 앱 Ingress 에 `traefik.ingress.kubernetes.io/router.middlewares: authentik-forward-auth@kubernetescrd` 어노테이션 추가
+
+OIDC 를 지원하는 앱: `argocd.tf` 처럼 `authentik_provider_oauth2` + `authentik_application`, 클라이언트 시크릿은 SOPS 파일에 두고 양쪽에서 읽는다.
+
 ## 시크릿 작성
 
 ```sh

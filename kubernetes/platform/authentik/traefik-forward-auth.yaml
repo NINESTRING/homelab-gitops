@@ -1,0 +1,42 @@
+# Traefik forward auth 미들웨어. OIDC 를 모르는 앱의 Ingress 에 아래 어노테이션 한 줄을 달면 Authentik 로그인이 요구된다.
+#   traefik.ingress.kubernetes.io/router.middlewares: authentik-forward-auth@kubernetescrd
+# Authentik 쪽에는 Terraform(20-authentik)으로 proxy provider(forward_single) + application 을 만들고 내장 Outpost 에 붙인다.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: forward-auth
+  namespace: authentik
+spec:
+  forwardAuth:
+    address: http://authentik-server.authentik.svc.cluster.local/outpost.goauthentik.io/auth/traefik
+    trustForwardHeader: true
+    authResponseHeaders:
+      - X-authentik-username
+      - X-authentik-groups
+      - X-authentik-entitlements
+      - X-authentik-email
+      - X-authentik-name
+      - X-authentik-uid
+      - X-authentik-jwt
+      - X-authentik-meta-jwks
+      - X-authentik-meta-outpost
+      - X-authentik-meta-provider
+      - X-authentik-meta-app
+      - X-authentik-meta-version
+---
+# 보호되는 앱 도메인의 /outpost.goauthentik.io/ 경로(로그인 콜백 등)를 Authentik 서버로 보낸다.
+# 규칙이 더 길어 앱 Ingress 라우터보다 우선한다.
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: outpost-callback
+  namespace: authentik
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: HostRegexp(`^.+\.thatsmycodename\.com$`) && PathPrefix(`/outpost.goauthentik.io/`)
+      services:
+        - name: authentik-server
+          port: http

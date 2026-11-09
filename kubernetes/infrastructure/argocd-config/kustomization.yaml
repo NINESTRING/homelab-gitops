@@ -1,0 +1,8 @@
+# Argo CD 가 참조하는 추가 Secret. Argo CD 설치 자체는 Terraform(10-cluster-bootstrap)이 하지만
+# 시크릿 값은 state 에 두지 않기 위해 SOPS 로 레포에서 전달한다.
+# argocd-oidc: Authentik OIDC 클라이언트 시크릿 (argocd-cm 의 oidc.config 가 $argocd-oidc:clientSecret 로 참조).
+# Terraform 20-authentik 도 같은 파일을 읽어 Authentik 쪽 프로바이더에 같은 값을 넣는다.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+generators:
+  - secret-generator.yaml
