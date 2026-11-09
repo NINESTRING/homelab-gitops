@@ -1,0 +1,12 @@
+# SOPS 암호화 규칙. 개인 키는 ~/.config/sops/age/keys.txt (패스워드 매니저에 백업).
+# 수신자를 추가하면 `sops updatekeys <file>` 로 기존 파일을 재암호화한다.
+keys:
+  - &ninestring age195dhv5j6us0n0vmy0hhug4608tv5tgapz6h73y64e4hxgypr3u0sndle8c
+creation_rules:
+  # Kubernetes Secret: data/stringData 만 암호화해 metadata 는 읽을 수 있게 둔다
+  - path_regex: kubernetes/.*\.sops\.yaml$
+    encrypted_regex: ^(data|stringData)$
+    age: *ninestring
+  # Terraform tfvars 등 그 외 파일은 전체 암호화
+  - path_regex: .*\.sops\.(yaml|json|env)$
+    age: *ninestring

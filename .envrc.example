@@ -5,13 +5,16 @@
 export AWS_ACCESS_KEY_ID=''
 export AWS_SECRET_ACCESS_KEY=''
 export CLOUDFLARE_ACCOUNT_ID=''
+# s3 백엔드가 R2 를 바라보게 함 (backend 블록에 계정 ID 를 하드코딩하지 않기 위해)
+export AWS_ENDPOINT_URL_S3="https://${CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com"
+export TF_VAR_cloudflare_account_id="$CLOUDFLARE_ACCOUNT_ID"
 
 # Cloudflare provider (DNS, Tunnel) - Phase 2 에서 발급
 export CLOUDFLARE_API_TOKEN=''
 
 # Tailscale provider - Phase 2 에서 발급
 export TAILSCALE_API_KEY=''
-export TAILSCALE_TAILNET=''
+export TAILSCALE_TAILNET=''   # 예: ninestring.github (tailscale status --json 의 CurrentTailnet.Name)
 
 # SOPS age 개인 키 경로 - Phase 2 에서 생성
 export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"

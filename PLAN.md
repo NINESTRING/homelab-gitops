@@ -29,11 +29,11 @@
 | SSO / IdP | Authentik | 홈랩에서 가볍고 UI 친절, Terraform provider 있음, 프록시(forward auth) 내장이라 OIDC 미지원 앱도 보호 가능. 대안: Keycloak(무겁지만 표준적) |
 | Ingress | Traefik (k3s 기본) | 추가 설치 없음, Authentik forward auth 미들웨어 연동 잘 됨 |
 | 인증서 | cert-manager + Let's Encrypt DNS-01 (Cloudflare) | 포트 80 외부 개방 없이 와일드카드 발급 |
-| DNS | Cloudflare | external-dns로 자동 레코드 생성, 무료 |
-| 외부 접근 | Tailscale(기본, 사설) + Cloudflare Tunnel(공개가 필요한 것만) | 집 공유기 포트포워딩 없이 접근. 공개 서비스는 최소화 |
-| 시크릿 | SOPS + age (Argo CD에는 KSOPS 플러그인) | 외부 서비스 의존 없음. 대안: External Secrets Operator + 1Password/Bitwarden |
-| 스토리지 | local-path-provisioner (k3s 기본) | 단일 노드라 분산 스토리지 불필요. VM 디스크를 외부 SSD에 둘지 결정 필요 |
-| 백업 | Velero + restic → 외부 디스크 또는 Backblaze B2 | PV + 매니페스트 백업 |
+| DNS | Cloudflare | external-dns로 자동 레코드 생성, 무료. 내부 전용 서비스도 공개 존에 Tailscale IP 로 올림(이름만 노출, 접근은 Tailscale 필요). split DNS 는 도입하지 않음 |
+| 외부 접근 | Tailscale(기본, 사설) + Cloudflare Tunnel(공개가 필요한 것만) | 집 공유기 포트포워딩 없이 접근. 공개 서비스는 최소화. Tailscale ACL 은 Terraform 이 관리하되 처음엔 현재 허용 범위 유지 |
+| 시크릿 | SOPS + age (Argo CD에는 KSOPS 플러그인) | 외부 서비스 의존 없음. age 키는 하나로 시작, 필요 시 `.sops.yaml` 수신자 추가. 대안: External Secrets Operator + 1Password/Bitwarden |
+| 스토리지 | local-path-provisioner (k3s 기본), VM 디스크는 내장 SSD | 단일 노드라 분산 스토리지 불필요. 내장 228GB 중 172GB 여유(2026-11-09). 미디어가 커지면 VM 디스크를 옮기지 않고 외장 디스크를 해당 앱 볼륨으로만 마운트 |
+| 백업 | Velero + node-agent(kopia) → Cloudflare R2 (`velero` 버킷, 2026-11-09 확정) | PV + 매니페스트 오프사이트 백업. 이미 있는 계정 재사용, 10GB 무료. 상태 백엔드와 같은 계정이라는 점은 감수. 큰 미디어는 나중에 외장 디스크로 분리 |
 | Terraform 상태 | Cloudflare R2 (s3 백엔드, `use_lockfile`) | 이미 있는 계정, 무료 10GB. HCP Terraform은 원격 실행이 기본이라 Tailscale 뒤 클러스터에 못 붙는 함정이 있음. 루트 디렉터리별 state key 분리 |
 | 관측 | kube-prometheus-stack + Loki + Grafana(SSO) | 표준 조합 |
 
@@ -75,7 +75,7 @@ homelab-gitops/
 - [x] 계정 준비: Cloudflare, Tailscale, GitHub 모두 완료
 - [x] Terraform 상태 백엔드: Cloudflare R2 `tfstate` 버킷 + API 토큰 생성, direnv(`.envrc`)로 주입, `terraform init` 연결 확인 완료
 - [x] Mac mini 스펙 확인: M1, RAM 16GB → Lima VM에 CPU 4, 메모리 10GB, 디스크 100GB 할당 기준. macOS 호스트에 6GB 남김
-- [ ] 위 ADR 표의 선택 확정
+- [x] 위 ADR 표의 선택 확정 (2026-11-09: 내장 디스크, R2 백업, age 키 하나, 공개 DNS, Tailscale ACL 은 Terraform 관리)
 - [x] 레포 `git init`
 - [x] 위 구조의 빈 디렉터리와 README, `.gitignore`, `.mise.toml`(terraform 1.17.1 고정) 생성
 - [x] 뼈대(README, .gitignore, .mise.toml, .envrc.example, 디렉터리)를 커밋하고 GitHub에 push
@@ -94,10 +94,10 @@ homelab-gitops/
 - 완료 기준: Mac mini를 재부팅해도 손대지 않고 VM과 k3s가 올라옴. 노트북에서 Tailscale 경유로 `kubectl get nodes` 성공 — **충족 (2026-11-08)**
 
 ### Phase 2. Terraform 기반 + GitOps 부트스트랩 (하루)
-- [ ] `terraform/00-foundation`: 원격 state 백엔드, Cloudflare zone 데이터, 기본 DNS 레코드, Tailscale ACL
-- [ ] age 키 생성(개인 키는 패스워드 매니저에 보관), `.sops.yaml` 작성
-- [ ] `terraform/10-cluster-bootstrap`: helm provider로 Argo CD 설치, age 키를 Secret으로 주입, root Application(app-of-apps) 생성
-- [ ] GitHub Actions: `terraform fmt -check`, `validate`, PR에 `plan` 코멘트
+- [ ] `terraform/00-foundation`: 원격 state 백엔드, Cloudflare zone 데이터, 기본 DNS 레코드, Tailscale ACL — 코드 작성, init/validate 완료(2026-11-09). apply 는 Cloudflare API 토큰 + Tailscale API 키를 `.envrc` 에 채운 뒤
+- [x] age 키 생성, `.sops.yaml` 작성 (2026-11-09). **개인 키 `~/.config/sops/age/keys.txt` 를 패스워드 매니저에 백업할 것**
+- [ ] `terraform/10-cluster-bootstrap`: helm provider로 Argo CD 설치, age 키를 Secret으로 주입, root Application(app-of-apps) 생성 — 코드 작성 완료(2026-11-09), apply 진행
+- [x] GitHub Actions: `terraform fmt -check`, `validate` (2026-11-09). PR `plan` 코멘트는 제외: 클러스터가 Tailscale 뒤라 러너가 붙을 수 없고, Cloudflare 토큰을 GitHub 에 올리지 않기로 함
 - 완료 기준: `terraform apply` 한 번으로 빈 클러스터에 Argo CD가 뜨고, 레포의 `kubernetes/bootstrap`을 바라보며 Synced 상태
 
 ### Phase 3. 클러스터 기본 인프라 (GitOps) (이틀)

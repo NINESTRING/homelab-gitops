@@ -1,0 +1,42 @@
+# Terraform 정적 검사. 자격 증명 없이 돌 수 있는 것만 (fmt, validate).
+# plan 은 로컬에서 수행한다. 클러스터가 Tailscale 뒤에 있어 GitHub 러너가 붙을 수 없다.
+name: terraform
+
+on:
+  pull_request:
+    paths: ["terraform/**", ".github/workflows/terraform.yml"]
+  push:
+    branches: [main]
+    paths: ["terraform/**", ".github/workflows/terraform.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: [terraform/00-foundation, terraform/10-cluster-bootstrap, terraform/20-authentik]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 디렉터리에 .tf 가 있는지 확인
+        id: has_tf
+        run: |
+          if ls ${{ matrix.dir }}/*.tf >/dev/null 2>&1; then echo "yes=true" >> "$GITHUB_OUTPUT"; else echo "yes=false" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: jdx/mise-action@v2
+        if: steps.has_tf.outputs.yes == 'true'
+
+      - name: terraform fmt -check
+        if: steps.has_tf.outputs.yes == 'true'
+        run: terraform fmt -check -recursive -diff ${{ matrix.dir }}
+
+      - name: terraform validate
+        if: steps.has_tf.outputs.yes == 'true'
+        working-directory: ${{ matrix.dir }}
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate

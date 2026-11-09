@@ -67,4 +67,37 @@ kubectl get nodes   # direnv 가 KUBECONFIG=$PWD/kubeconfig 를 잡음
 
 `bootstrap.sh` 는 `sudo` 를 쓰므로 원격에서 돌릴 때는 `ssh -t` 로 tty 를 붙여야 비밀번호를 입력할 수 있다.
 
+## Phase 2: Terraform
+
+순서대로 적용한다. 자격 증명은 전부 `.envrc` 에서 온다.
+
+```sh
+cd terraform/00-foundation
+terraform init
+terraform import tailscale_acl.homelab acl   # 처음 한 번. 기존 정책을 덮어쓰지 않기 위해
+terraform plan && terraform apply
+
+cd ../10-cluster-bootstrap                   # kubeconfig 가 레포 루트에 있어야 함
+terraform init && terraform plan && terraform apply
+```
+
+- `00-foundation`: Cloudflare 존 조회, `macmini.<domain>` A 레코드(Tailscale IP), Velero 용 R2 버킷 `velero`, Tailscale 정책 파일
+- `10-cluster-bootstrap`: `argocd` 네임스페이스, age 개인 키 Secret `sops-age`, Argo CD(Helm, KSOPS 포함), root Application → `kubernetes/bootstrap`
+- Cloudflare API 토큰 권한: Zone → Zone:Read, DNS:Edit (존 `thatsmycodename.com`), Account → Workers R2 Storage:Edit
+- Tailscale API 키: 관리 콘솔 > Settings > Keys > API access tokens. 테일넷 이름은 `tailscale status --json` 의 `CurrentTailnet.Name`
+- age 개인 키(`~/.config/sops/age/keys.txt`)는 `10-cluster-bootstrap` state 에도 저장된다. R2 접근 권한이 곧 시크릿 접근 권한이다.
+
+Argo CD 첫 접속 (Phase 3 에서 Ingress 가 생기기 전까지):
+
+```sh
+kubectl -n argocd port-forward svc/argocd-server 8080:80
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+```
+
+## 시크릿 작성
+
+```sh
+sops kubernetes/apps/<name>/secret.sops.yaml   # .sops.yaml 규칙에 따라 data/stringData 만 암호화
+```
+
 VM 운영: `limactl shell k3s`, `limactl stop k3s`, `limactl edit k3s`(리소스 변경), 로그 `~/Library/Logs/lima-k3s.log`

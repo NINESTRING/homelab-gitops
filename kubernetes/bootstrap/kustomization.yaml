@@ -1,0 +1,6 @@
+# Argo CD root Application(app-of-apps)이 바라보는 디렉터리.
+# 여기에 하위 Application 매니페스트를 추가하면 Argo CD 가 자동으로 동기화한다.
+# Phase 3 에서 infrastructure, platform, apps Application 을 추가한다.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: []
