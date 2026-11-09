@@ -7,15 +7,31 @@ resource "kubernetes_namespace_v1" "argocd" {
   }
 }
 
-# KSOPS 가 Secret 을 복호화할 때 쓰는 age 개인 키
-resource "kubernetes_secret_v1" "sops_age" {
-  metadata {
-    name      = "sops-age"
-    namespace = kubernetes_namespace_v1.argocd.metadata[0].name
+# KSOPS 가 Secret 을 복호화할 때 쓰는 age 개인 키.
+# kubernetes_secret_v1 은 refresh 때 클러스터 값을 읽어 state 에 평문으로 남기므로 쓰지 않는다.
+# 대신 Terraform 이 kubectl 을 호출해 넣고, state 에는 키 파일의 sha256 만 저장한다.
+# 키 파일이 바뀌면 해시가 바뀌어 다시 적용된다.
+locals {
+  sops_age_key_path = pathexpand(var.sops_age_key_file)
+}
+
+resource "terraform_data" "sops_age" {
+  input            = sha256(file(local.sops_age_key_path))
+  triggers_replace = [sha256(file(local.sops_age_key_path)), kubernetes_namespace_v1.argocd.id]
+
+  provisioner "local-exec" {
+    environment = { KUBECONFIG = local.kubeconfig }
+    command     = <<-EOT
+      kubectl -n ${kubernetes_namespace_v1.argocd.metadata[0].name} create secret generic sops-age \
+        --from-file=keys.txt='${local.sops_age_key_path}' --dry-run=client -o yaml \
+      | kubectl apply -f -
+    EOT
   }
-  type = "Opaque"
-  data = {
-    "keys.txt" = file(pathexpand(var.sops_age_key_file))
+
+  provisioner "local-exec" {
+    when        = destroy
+    environment = { KUBECONFIG = "${path.module}/../../kubeconfig" }
+    command     = "kubectl -n argocd delete secret sops-age --ignore-not-found"
   }
 }
 
@@ -31,7 +47,7 @@ resource "helm_release" "argocd" {
   wait    = true
   timeout = 600
 
-  depends_on = [kubernetes_secret_v1.sops_age]
+  depends_on = [terraform_data.sops_age]
 }
 
 # root Application (app-of-apps). Application CRD 가 설치된 뒤에야 만들 수 있으므로

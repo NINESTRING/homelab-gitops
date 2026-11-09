@@ -85,7 +85,7 @@ terraform init && terraform plan && terraform apply
 - `10-cluster-bootstrap`: `argocd` 네임스페이스, age 개인 키 Secret `sops-age`, Argo CD(Helm, KSOPS 포함), root Application → `kubernetes/bootstrap`
 - Cloudflare API 토큰 권한: Zone → Zone:Read, DNS:Edit (존 `thatsmycodename.com`), Account → Workers R2 Storage:Edit
 - Tailscale API 키: 관리 콘솔 > Settings > Keys > API access tokens. 테일넷 이름은 `tailscale status --json` 의 `CurrentTailnet.Name`
-- age 개인 키(`~/.config/sops/age/keys.txt`)는 `10-cluster-bootstrap` state 에도 저장된다. R2 접근 권한이 곧 시크릿 접근 권한이다.
+- age 개인 키(`~/.config/sops/age/keys.txt`)는 Terraform 이 `kubectl` 로 주입한다(`terraform_data` + local-exec). state 에는 파일 해시만 남는다. 키 파일을 바꾸면 다음 apply 때 자동 재적용.
 
 Argo CD 첫 접속 (Phase 3 에서 Ingress 가 생기기 전까지):
 

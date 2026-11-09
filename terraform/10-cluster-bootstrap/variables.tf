@@ -1,8 +1,9 @@
 variable "sops_age_key_file" {
-  description = "SOPS age 개인 키 파일. Argo CD repo-server 가 시크릿 복호화에 쓴다. 주의: 값이 Terraform state(R2)에 저장된다"
+  description = "SOPS age 개인 키 파일. Argo CD repo-server 가 시크릿 복호화에 쓴다. kubectl 로 주입되며 state 에는 해시만 남는다"
   type        = string
   default     = "~/.config/sops/age/keys.txt"
 }
+
 
 variable "gitops_repo_url" {
   description = "Argo CD 가 바라볼 GitOps 레포 (공개 레포라 자격 증명 불필요)"
