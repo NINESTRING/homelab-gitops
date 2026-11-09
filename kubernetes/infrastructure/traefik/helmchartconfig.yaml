@@ -11,10 +11,12 @@ spec:
       default:
         defaultCertificate:
           secretName: wildcard-thatsmycodename-com-tls
+    # 차트 v28 이후 리다이렉트는 ports.<name>.http.redirections 아래 (http 단계 주의)
     ports:
       web:
-        redirections:
-          entryPoint:
-            to: websecure
-            scheme: https
-            permanent: true
+        http:
+          redirections:
+            entryPoint:
+              to: websecure
+              scheme: https
+              permanent: true
