@@ -1,0 +1,14 @@
+- 레포:
+    - homelab-gitops:
+        - abbr: GH
+          href: https://github.com/NINESTRING/homelab-gitops
+- 문서:
+    - Homepage:
+        - abbr: HP
+          href: https://gethomepage.dev
+    - Argo CD:
+        - abbr: AR
+          href: https://argo-cd.readthedocs.io
+    - Authentik:
+        - abbr: AK
+          href: https://docs.goauthentik.io

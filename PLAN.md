@@ -130,7 +130,10 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 
 ### Phase 6. 애플리케이션 (지속)
 후보: Homepage(대시보드), Vaultwarden, Immich, Jellyfin, Paperless-ngx, Gitea, n8n, Home Assistant 등.
-- [ ] 앱 추가 템플릿 정하기: `kubernetes/apps/<name>/` (kustomization + helm values + ingress + sops secret)
+- [x] 앱 추가 템플릿 정하기: `kubernetes/apps/<name>/` (kustomization + helm values + ingress + sops secret) — README "앱 추가 템플릿" (2026-11-09)
+- [x] 첫 앱 Homepage: `kubernetes/apps/homepage`, `https://home.thatsmycodename.com`, forward auth, Ingress 어노테이션 자동 탐색 (2026-11-09)
+- [ ] Homepage Argo CD 위젯: Argo CD 에 `readonly` 로컬 계정(apiKey) 추가 후 토큰을 `homepage-secrets.sops.yaml` 에
+- [ ] 다음 앱: Vaultwarden (PVC + 백업 검증)
 - [ ] 공개가 필요한 앱만 Cloudflare Tunnel로 노출, 나머지는 Tailscale 전용
 - 완료 기준: 새 앱 추가가 PR 하나로 끝남
 
@@ -155,4 +158,4 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 
 1. 백업 보관물 점검: 첫 일일 백업(03:00 KST) 이후 `kubectl -n velero get backup` 으로 Completed 확인
 2. (정리) Argo CD 로컬 admin 로그인 비활성화 검토 (`configs.params.admin.enabled: false`) — SSO 가 안정되면
-3. Phase 6: 앱 추가 템플릿 확정 후 첫 앱(Homepage 또는 Vaultwarden), 공개가 필요한 앱만 Cloudflare Tunnel
+3. Phase 6 계속: Vaultwarden, Homepage Argo CD 위젯. 공개가 필요한 앱이 생기면 Cloudflare Tunnel

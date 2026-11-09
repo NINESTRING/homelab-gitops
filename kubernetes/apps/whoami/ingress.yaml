@@ -8,6 +8,13 @@ metadata:
     external-dns.kubernetes.io/target: macmini.thatsmycodename.com
     # Authentik forward auth (Phase 4). 미들웨어는 kubernetes/platform/authentik, 프로바이더는 terraform/20-authentik/whoami.tf
     traefik.ingress.kubernetes.io/router.middlewares: authentik-forward-auth@kubernetescrd
+    # Homepage 대시보드 자동 등록 (Phase 6). pod-selector 는 상태 점(dot)용으로 Pod 라벨을 가리킨다.
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: whoami
+    gethomepage.dev/group: 앱
+    gethomepage.dev/icon: mdi-account-question
+    gethomepage.dev/description: 배관 검증용 테스트 앱
+    gethomepage.dev/pod-selector: app=whoami
 spec:
   ingressClassName: traefik
   rules:

@@ -158,6 +158,30 @@ velero backup get                       # 일일 백업 확인
 velero restore create --from-backup <name> --include-namespaces whoami
 ```
 
+## Phase 6: 애플리케이션
+
+| 위치 | 역할 |
+|---|---|
+| `kubernetes/apps/homepage` | Homepage 대시보드 `https://home.thatsmycodename.com` (forward auth). 플랫폼 서비스는 `config/services.yaml` 에 고정, 앱은 Ingress 어노테이션으로 자동 등록. 시크릿: `homepage-secrets.sops.yaml`(Grafana 위젯용 로컬 admin) |
+| `terraform/20-authentik/homepage.tf` | Homepage proxy 프로바이더/앱 → 내장 Outpost |
+
+### 앱 추가 템플릿
+
+`kubernetes/apps/<name>/` 디렉터리 하나가 Argo CD Application 하나다 (`bootstrap/apps.yaml` 의 ApplicationSet 이 자동 등록).
+PR 하나에 아래를 담으면 끝난다.
+
+1. `kustomization.yaml`(`namespace: <name>`), `namespace.yaml`, 워크로드 매니페스트 또는 `helmCharts:` + `values.yaml`
+2. `ingress.yaml`: TLS 블록 없이 `external-dns.kubernetes.io/target` 어노테이션. 로그인이 필요하면
+   `traefik.ingress.kubernetes.io/router.middlewares: authentik-forward-auth@kubernetescrd` 추가 후
+   `terraform/20-authentik/<name>.tf`(`homepage.tf` 복사) 작성, `terraform apply`
+3. Homepage 타일: Ingress 에 `gethomepage.dev/enabled: "true"`, `name`, `group`, `icon`, `description`,
+   `pod-selector` 어노테이션 (`apps/whoami/ingress.yaml` 참고). 위젯이 필요하면 `gethomepage.dev/widget.type`, `widget.url`
+4. 시크릿: `<name>-secrets.sops.yaml` + `secret-generator.yaml`(ksops). `homepage/` 의 것을 복사
+5. 상태가 있으면(PVC) Velero 백업 대상인지 확인 (`platform/velero/values.yaml` 의 `excludedNamespaces`)
+6. 외부 공개가 필요한 앱만 Cloudflare Tunnel (아직 없음). 나머지는 Tailscale 안에서만 열린다
+
+Homepage 설정 변경: `kubernetes/apps/homepage/config/*.yaml` 수정 후 커밋. configMapGenerator 해시가 바뀌어 Pod 가 자동 재시작된다.
+
 ## 시크릿 작성
 
 ```sh

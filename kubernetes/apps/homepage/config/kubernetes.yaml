@@ -1,0 +1,4 @@
+# 클러스터 안에서 ServiceAccount 로 접근. Ingress 에 gethomepage.dev/* 어노테이션이 있으면 타일로 자동 등록.
+mode: cluster
+ingress: true
+traefik: false

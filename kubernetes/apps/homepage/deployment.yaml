@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homepage
+  labels:
+    app.kubernetes.io/name: homepage
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: homepage
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: homepage
+    spec:
+      serviceAccountName: homepage
+      automountServiceAccountToken: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: homepage
+          image: ghcr.io/gethomepage/homepage:v2.7.0
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            # 쉼표 앞 항목은 kubelet 프로브용, 뒤는 Ingress 호스트. 빠지면 "Host validation failed" 로 403.
+            - name: HOMEPAGE_ALLOWED_HOSTS
+              value: "$(MY_POD_IP):3000,home.thatsmycodename.com"
+            - name: LOG_LEVEL
+              value: info
+          envFrom:
+            - secretRef:
+                name: homepage-secrets
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          livenessProbe:
+            httpGet:
+              path: /api/healthcheck
+              port: http
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/healthcheck
+              port: http
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 384Mi }
+          volumeMounts:
+            - { name: config, mountPath: /app/config/kubernetes.yaml, subPath: kubernetes.yaml }
+            - { name: config, mountPath: /app/config/settings.yaml, subPath: settings.yaml }
+            - { name: config, mountPath: /app/config/services.yaml, subPath: services.yaml }
+            - { name: config, mountPath: /app/config/widgets.yaml, subPath: widgets.yaml }
+            - { name: config, mountPath: /app/config/bookmarks.yaml, subPath: bookmarks.yaml }
+            - { name: config, mountPath: /app/config/docker.yaml, subPath: docker.yaml }
+            - { name: config, mountPath: /app/config/custom.css, subPath: custom.css }
+            - { name: config, mountPath: /app/config/custom.js, subPath: custom.js }
+            - { name: logs, mountPath: /app/config/logs }
+      volumes:
+        - name: config
+          configMap:
+            name: homepage-config
+        - name: logs
+          emptyDir: {}

@@ -1,0 +1,15 @@
+title: Homelab
+language: ko
+headerStyle: boxed
+statusStyle: dot
+hideVersion: true
+layout:
+  플랫폼:
+    style: row
+    columns: 4
+  앱:
+    style: row
+    columns: 4
+quicklaunch:
+  searchDescriptions: true
+  hideInternetSearch: true
