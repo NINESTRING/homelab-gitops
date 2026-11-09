@@ -111,11 +111,11 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 - 완료 기준: 테스트 앱(whoami) 하나를 `kubernetes/apps/`에 커밋하면 DNS, 인증서, Ingress까지 자동으로 생겨 브라우저에서 HTTPS로 열림 — **충족 (2026-11-09, prod 인증서, whoami/argocd CNAME, HTTP→HTTPS 리다이렉트 확인)**
 
 ### Phase 4. SSO (이틀)
-- [ ] Authentik 배포 (Helm 2026.8.5, PostgreSQL 포함. Redis 는 더 이상 불필요), Ingress `auth.thatsmycodename.com` — 매니페스트 커밋(2026-11-09), 기동 확인 남음
+- [x] Authentik 배포 (Helm 2026.8.5, PostgreSQL 포함. Redis 는 더 이상 불필요), Ingress `auth.thatsmycodename.com` (2026-11-09 기동 확인)
 - [x] 초기 admin 부트스트랩 비밀번호/토큰은 SOPS로 관리 (`kubernetes/platform/authentik/secrets.sops.yaml`, 2026-11-09)
-- [ ] `terraform/20-authentik`: Authentik provider로 그룹, OIDC 프로바이더, 애플리케이션 정의 (Argo CD, Grafana) — 코드 작성·validate(2026-11-09). API 토큰은 sops provider 로 SOPS 파일에서 읽음. Grafana 는 Phase 5 에서 추가
-- [ ] Argo CD OIDC 연동 (직접 OIDC, Dex 미사용), RBAC을 Authentik 그룹에 매핑 — values 작성(2026-11-09), apply 는 Authentik 기동 후
-- [ ] Traefik forward auth 미들웨어 — OIDC 미지원 앱 보호용 Authentik outpost — Middleware/IngressRoute 와 whoami proxy provider 작성(2026-11-09). 내장 Outpost 사용
+- [x] `terraform/20-authentik`: Authentik provider로 그룹, OIDC 프로바이더, 애플리케이션 정의 (2026-11-09 apply: admins 그룹, Argo CD OIDC, whoami proxy. API 토큰은 sops provider 로 SOPS 파일에서 읽음. Grafana 는 Phase 5 에서 추가)
+- [x] Argo CD OIDC 연동 (직접 OIDC, Dex 미사용), RBAC을 Authentik 그룹에 매핑 (2026-11-09 apply)
+- [ ] Traefik forward auth 미들웨어 — OIDC 미지원 앱 보호용 Authentik outpost — Middleware/IngressRoute, whoami proxy provider 적용(2026-11-09, 내장 Outpost). whoami Ingress 어노테이션 커밋 후 브라우저 확인 남음
 - [ ] (선택) Passkey/WebAuthn, TOTP 정책
 - 완료 기준: Argo CD와 whoami가 Authentik 로그인 한 번으로 열림. 새 앱 추가 시 Terraform 리소스 하나 + Ingress 어노테이션만으로 SSO 적용
 

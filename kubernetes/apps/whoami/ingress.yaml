@@ -6,6 +6,8 @@ metadata:
   name: whoami
   annotations:
     external-dns.kubernetes.io/target: macmini.thatsmycodename.com
+    # Authentik forward auth (Phase 4). 미들웨어는 kubernetes/platform/authentik, 프로바이더는 terraform/20-authentik/whoami.tf
+    traefik.ingress.kubernetes.io/router.middlewares: authentik-forward-auth@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
