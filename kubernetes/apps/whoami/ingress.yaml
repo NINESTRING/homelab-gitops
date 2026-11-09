@@ -5,7 +5,7 @@ kind: Ingress
 metadata:
   name: whoami
   annotations:
-    external-dns.alpha.kubernetes.io/target: macmini.thatsmycodename.com
+    external-dns.kubernetes.io/target: macmini.thatsmycodename.com
 spec:
   ingressClassName: traefik
   rules:

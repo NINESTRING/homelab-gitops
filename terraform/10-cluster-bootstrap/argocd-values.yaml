@@ -20,7 +20,7 @@ server:
     enabled: true
     ingressClassName: traefik
     annotations:
-      external-dns.alpha.kubernetes.io/target: macmini.thatsmycodename.com
+      external-dns.kubernetes.io/target: macmini.thatsmycodename.com
 
 # ---------------------------------------------------------------- repo-server: KSOPS + age
 repoServer:

@@ -102,7 +102,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.pas
 | 디렉터리 | 역할 |
 |---|---|
 | `infrastructure/cert-manager` | Let's Encrypt DNS-01(Cloudflare) ClusterIssuer 2개(staging, prod), `*.thatsmycodename.com` 와일드카드 Certificate → `kube-system/wildcard-thatsmycodename-com-tls` |
-| `infrastructure/external-dns` | Ingress 호스트명을 Cloudflare 에 CNAME 으로 자동 등록. Ingress 에 `external-dns.alpha.kubernetes.io/target: macmini.thatsmycodename.com` 어노테이션 필요 |
+| `infrastructure/external-dns` | Ingress 호스트명을 Cloudflare 에 CNAME 으로 자동 등록. Ingress 에 `external-dns.kubernetes.io/target: macmini.thatsmycodename.com` 어노테이션 필요 |
 | `infrastructure/traefik` | k3s 내장 Traefik 의 HelmChartConfig: 기본 TLS 인증서 = 와일드카드, HTTP→HTTPS 리다이렉트 |
 | `infrastructure/reloader` | Secret/ConfigMap 변경 시 Deployment 자동 재시작 |
 | `apps/whoami` | 배관 검증용 테스트 앱 `https://whoami.thatsmycodename.com` |
