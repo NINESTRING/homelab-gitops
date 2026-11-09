@@ -120,13 +120,13 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 - 완료 기준: Argo CD와 whoami가 Authentik 로그인 한 번으로 열림. 새 앱 추가 시 Terraform 리소스 하나 + Ingress 어노테이션만으로 SSO 적용 — **충족 (2026-11-09)**
 
 ### Phase 5. 관측과 백업 (이틀)
-- [ ] kube-prometheus-stack 93.0.0, Grafana OIDC(Authentik) 연동 — 매니페스트·Authentik 프로바이더 적용(2026-11-09), 기동 확인 남음
-- [ ] Loki 7.5.0 + Alloy 1.15.0 — 매니페스트(2026-11-09), 기동 확인 남음
-- [ ] 알림: Alertmanager → Telegram (2026-11-09 결정·설정. 회사 Slack 은 개인 인프라 정보 유출/통제권 문제로 배제). 수신 확인 남음
-- [ ] Velero 1.18 + kopia → R2 `velero`, 매일 03:00 KST, 30일 보관 — 매니페스트(2026-11-09), 첫 백업 확인 남음
-- [ ] 복구 리허설: 네임스페이스 하나 지우고 복구해보기
-- [ ] 호스트 모니터링: node_exporter 를 macOS 호스트에 (Homebrew, 루프백 바인딩) — Brewfile/bootstrap.sh 반영(2026-11-09). Mac mini 에서 bootstrap.sh 재실행 남음
-- 완료 기준: 디스크/메모리 알림이 오고, 백업 복구를 실제로 한 번 성공함
+- [x] kube-prometheus-stack 93.0.0, Grafana OIDC(Authentik) 연동 (2026-11-09 확인. operator 이미지는 arm64 가 있는 v0.94.1 로 고정)
+- [x] Loki 7.5.0 + Alloy 1.15.0 (2026-11-09 전 네임스페이스 로그 유입 확인, NetworkPolicy 로 접근 제한)
+- [x] 알림: Alertmanager → Telegram (2026-11-09 테스트 알림 수신 확인. 회사 Slack 은 개인 인프라 정보 유출/통제권 문제로 배제)
+- [x] Velero 1.18 + kopia → R2 `velero`, 매일 03:00 KST, 30일 보관 (2026-11-09 BSL Available, 수동 백업 40개 항목·PV 90MB 성공)
+- [x] 복구 리허설 (2026-11-09 authentik 백업을 authentik-restore 네임스페이스로 복원. PostgreSQL PV 포함 파드 3개 기동 확인 후 삭제)
+- [x] 호스트 모니터링: node_exporter 를 macOS 호스트에 (Homebrew, 루프백 바인딩, 2026-11-09 수집 확인)
+- 완료 기준: 디스크/메모리 알림이 오고, 백업 복구를 실제로 한 번 성공함 — **충족 (2026-11-09)**
 
 ### Phase 6. 애플리케이션 (지속)
 후보: Homepage(대시보드), Vaultwarden, Immich, Jellyfin, Paperless-ngx, Gitea, n8n, Home Assistant 등.
@@ -153,6 +153,6 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 
 ## 6. 바로 다음 할 일
 
-1. (정리) Argo CD 로컬 admin 로그인 비활성화 검토 (`configs.params.admin.enabled: false`) — SSO 가 안정되면
-2. Phase 5: kube-prometheus-stack + Grafana OIDC(Authentik), Loki, Alertmanager 알림 채널 결정
-3. Phase 5: Velero → R2 `velero` 버킷, 일일 스케줄, 복구 리허설
+1. 백업 보관물 점검: 첫 일일 백업(03:00 KST) 이후 `kubectl -n velero get backup` 으로 Completed 확인
+2. (정리) Argo CD 로컬 admin 로그인 비활성화 검토 (`configs.params.admin.enabled: false`) — SSO 가 안정되면
+3. Phase 6: 앱 추가 템플릿 확정 후 첫 앱(Homepage 또는 Vaultwarden), 공개가 필요한 앱만 Cloudflare Tunnel
