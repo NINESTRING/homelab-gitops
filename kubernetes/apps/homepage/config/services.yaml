@@ -3,7 +3,7 @@
 - 플랫폼:
     - Argo CD:
         href: https://argocd.thatsmycodename.com
-        icon: argocd
+        icon: argo-cd
         description: GitOps
         siteMonitor: http://argocd-server.argocd.svc.cluster.local/healthz
     - Authentik:
