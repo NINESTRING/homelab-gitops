@@ -14,6 +14,10 @@ defaultRules:
 # ---------------------------------------------------------------- Prometheus
 prometheus:
   prometheusSpec:
+    # Prometheus 데이터(10Gi, 재생성 가능)는 Velero 파일시스템 백업에서 제외. Grafana PVC 는 백업한다.
+    podMetadata:
+      annotations:
+        backup.velero.io/backup-volumes-excludes: prometheus-kps-kube-prometheus-stack-prometheus-db
     retention: 7d
     retentionSize: 8GB
     walCompression: true
