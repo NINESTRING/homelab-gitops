@@ -123,8 +123,10 @@ export KUBECONFIG="$REPO_DIR/kubeconfig"
 kubectl get nodes
 
 # ---------------------------------------------------------------- 7.5 호스트 node_exporter
-log "node_exporter 서비스 시작 (호스트 메트릭, :9100)"
-brew services start node_exporter >/dev/null
+# 루프백에만 바인딩: LAN/Tailscale 에 노출하지 않는다. VM 은 Lima 게이트웨이(192.168.5.2)로 호스트 localhost 에 닿는다.
+log "node_exporter 서비스 시작 (호스트 메트릭, 127.0.0.1:9100)"
+echo "--web.listen-address=127.0.0.1:9100" > "$(brew --prefix)/etc/node_exporter.args"
+brew services restart node_exporter >/dev/null
 
 # ---------------------------------------------------------------- 8. LaunchAgent
 log "로그인 시 VM 자동 시작 LaunchAgent 등록"
