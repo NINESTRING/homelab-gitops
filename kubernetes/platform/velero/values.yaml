@@ -57,7 +57,7 @@ schedules:
     template:
       ttl: 720h   # 30일 보관
       storageLocation: default
-      # 재생성 가능한 것은 제외: kube-system, 로그, whoami, 그리고 argocd (Terraform+Git 으로 재구축.
-      # 무엇보다 argocd 에는 age 마스터 키 Secret 이 있어 백업에 들어가면 안 된다)
-      excludedNamespaces: [kube-system, logging, whoami, argocd]
+      # 재생성 가능한 것은 제외: kube-system, 로그, whoami, argocd, velero (Terraform+Git+SOPS 로 재구축).
+      # argocd 에는 age 마스터 키, velero 에는 kopia 비밀번호와 R2 자격 증명이 있어 백업에 들어가면 안 된다.
+      excludedNamespaces: [kube-system, logging, whoami, argocd, velero]
       excludedResources: [events, events.events.k8s.io]
