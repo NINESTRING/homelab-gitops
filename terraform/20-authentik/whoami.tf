@@ -16,6 +16,6 @@ resource "authentik_application" "whoami" {
 }
 
 resource "authentik_outpost_provider_attachment" "whoami" {
-  outpost           = data.authentik_outpost.embedded.id
+  outpost           = authentik_outpost.embedded.id
   protocol_provider = authentik_provider_proxy.whoami.id
 }

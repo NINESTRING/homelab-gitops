@@ -15,8 +15,9 @@ resource "authentik_provider_oauth2" "argocd" {
   grant_types = ["authorization_code", "refresh_token"]
 
   allowed_redirect_uris = [
-    { matching_mode = "strict", url = "https://${local.argocd_host}/auth/callback" },
-    { matching_mode = "strict", url = "http://localhost:8085/auth/callback" }, # argocd CLI login
+    # redirect_uri_type 을 빼면 Authentik 이 채워 돌려줘 매번 diff 가 난다
+    { matching_mode = "strict", url = "https://${local.argocd_host}/auth/callback", redirect_uri_type = "authorization" },
+    { matching_mode = "strict", url = "http://localhost:8085/auth/callback", redirect_uri_type = "authorization" }, # argocd CLI login
   ]
 }
 
