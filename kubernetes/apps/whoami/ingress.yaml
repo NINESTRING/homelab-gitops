@@ -1,0 +1,21 @@
+# TLS 블록 없음: Traefik websecure 엔트리포인트가 기본 인증서(와일드카드)로 TLS 를 종료한다.
+# external-dns 가 호스트명을 보고 macmini.thatsmycodename.com 으로 CNAME 을 만든다.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: whoami
+  annotations:
+    external-dns.alpha.kubernetes.io/target: macmini.thatsmycodename.com
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: whoami.thatsmycodename.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

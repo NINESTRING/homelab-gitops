@@ -1,0 +1,7 @@
+reloader:
+  # 어노테이션 없이도 Secret/ConfigMap 변경을 감지해 재시작 (홈랩이라 전체 적용)
+  autoReloadAll: true
+  deployment:
+    resources:
+      requests: { cpu: 10m, memory: 32Mi }
+      limits: { memory: 64Mi }

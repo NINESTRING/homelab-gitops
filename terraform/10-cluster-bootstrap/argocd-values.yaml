@@ -8,10 +8,19 @@ configs:
     # TLS 는 Traefik 이 종료. Argo CD 는 평문 HTTP 로 받는다
     server.insecure: true
   cm:
-    # KSOPS(kustomize exec 플러그인) 허용
-    kustomize.buildOptions: --enable-alpha-plugins --enable-exec
+    # KSOPS(kustomize exec 플러그인) + kustomize helmCharts 허용
+    kustomize.buildOptions: --enable-alpha-plugins --enable-exec --enable-helm
     # 리소스 상태 추적을 어노테이션으로 (라벨 63자 제한 회피)
     application.resourceTrackingMethod: annotation
+
+# ---------------------------------------------------------------- Ingress (Phase 3)
+# TLS 는 Traefik 기본 인증서(와일드카드)로 종료되므로 tls 블록 없이 둔다. Tailscale 안에서만 열림.
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      external-dns.alpha.kubernetes.io/target: macmini.thatsmycodename.com
 
 # ---------------------------------------------------------------- repo-server: KSOPS + age
 repoServer:

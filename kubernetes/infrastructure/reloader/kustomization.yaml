@@ -1,0 +1,13 @@
+# Secret/ConfigMap 이 바뀌면 그걸 쓰는 Deployment 를 자동 재시작. SOPS 시크릿 갱신 시 유용.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: reloader
+resources:
+  - namespace.yaml
+helmCharts:
+  - name: reloader
+    repo: https://stakater.github.io/stakater-charts
+    version: 2.2.19
+    releaseName: reloader
+    namespace: reloader
+    valuesFile: values.yaml

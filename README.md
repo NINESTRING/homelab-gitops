@@ -94,6 +94,32 @@ kubectl -n argocd port-forward svc/argocd-server 8080:80
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
 ```
 
+## Phase 3: 클러스터 기본 인프라 (Argo CD)
+
+`kubernetes/bootstrap/` 의 ApplicationSet 세 개(infrastructure, platform, apps)가 각 계층 디렉터리의 하위 디렉터리를
+하나씩 Application 으로 만든다. Application 이름과 기본 네임스페이스는 디렉터리명이다.
+
+| 디렉터리 | 역할 |
+|---|---|
+| `infrastructure/cert-manager` | Let's Encrypt DNS-01(Cloudflare) ClusterIssuer 2개(staging, prod), `*.thatsmycodename.com` 와일드카드 Certificate → `kube-system/wildcard-thatsmycodename-com-tls` |
+| `infrastructure/external-dns` | Ingress 호스트명을 Cloudflare 에 CNAME 으로 자동 등록. Ingress 에 `external-dns.alpha.kubernetes.io/target: macmini.thatsmycodename.com` 어노테이션 필요 |
+| `infrastructure/traefik` | k3s 내장 Traefik 의 HelmChartConfig: 기본 TLS 인증서 = 와일드카드, HTTP→HTTPS 리다이렉트 |
+| `infrastructure/reloader` | Secret/ConfigMap 변경 시 Deployment 자동 재시작 |
+| `apps/whoami` | 배관 검증용 테스트 앱 `https://whoami.thatsmycodename.com` |
+
+새 앱 추가: `kubernetes/apps/<name>/kustomization.yaml` 과 매니페스트를 커밋한다. Ingress 는 TLS 블록 없이 두고
+(Traefik 기본 인증서 사용) target 어노테이션만 단다. 시크릿은 `*.sops.yaml` 로 암호화해 ksops 생성기로 읽는다
+(`infrastructure/external-dns/secret-generator.yaml` 참고).
+
+와일드카드 인증서는 처음 staging 발급기로 받는다. 브라우저에서 "Let's Encrypt (STAGING)" 발급자가 보이면
+`certificate-wildcard.yaml` 의 `issuerRef.name` 을 `letsencrypt-prod` 로 바꿔 커밋한다.
+
+로컬 렌더링 검증 (ksops 는 로컬에 없으므로 `generators:` 가 있는 디렉터리는 그 줄을 뺀 사본으로):
+
+```sh
+kubectl kustomize --enable-helm kubernetes/apps/whoami
+```
+
 ## 시크릿 작성
 
 ```sh

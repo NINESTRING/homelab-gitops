@@ -1,0 +1,43 @@
+# 실제 서비스
+# kubernetes/apps/<name>/ 디렉터리 하나 = Application 하나 (이름 = 디렉터리명, 기본 네임스페이스 = 디렉터리명).
+# 네임스페이스는 각 디렉터리가 직접 Namespace 매니페스트로 만든다 (kube-system 처럼 다른 곳에 가야 하는 리소스는 metadata.namespace 명시).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/NINESTRING/homelab-gitops.git
+        revision: main
+        directories:
+          - path: kubernetes/apps/*
+  template:
+    metadata:
+      name: "{{ .path.basename }}"
+      labels:
+        tier: apps
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/NINESTRING/homelab-gitops.git
+        targetRevision: main
+        path: "{{ .path.path }}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .path.basename }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - ServerSideApply=true
+        retry:
+          limit: 10
+          backoff:
+            duration: 15s
+            factor: 2
+            maxDuration: 5m

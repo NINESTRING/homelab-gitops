@@ -1,0 +1,9 @@
+# Phase 3 완료 기준 검증용 테스트 앱. DNS, 인증서, Ingress 가 자동으로 생기는지 본다.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: whoami
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml

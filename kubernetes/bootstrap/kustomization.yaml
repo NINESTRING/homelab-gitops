@@ -1,6 +1,9 @@
 # Argo CD root Application(app-of-apps)이 바라보는 디렉터리.
-# 여기에 하위 Application 매니페스트를 추가하면 Argo CD 가 자동으로 동기화한다.
-# Phase 3 에서 infrastructure, platform, apps Application 을 추가한다.
+# 계층(infrastructure, platform, apps)마다 ApplicationSet 하나. 각 계층 디렉터리의 하위 디렉터리 하나가 Application 하나가 된다.
+# 새 앱 추가 = 해당 계층 아래 디렉터리 + kustomization.yaml 커밋.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources: []
+resources:
+  - infrastructure.yaml
+  - platform.yaml
+  - apps.yaml

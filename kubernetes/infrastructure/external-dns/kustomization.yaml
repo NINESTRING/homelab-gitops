@@ -1,0 +1,17 @@
+# Ingress 호스트명 → Cloudflare DNS 자동 생성.
+# k3s Ingress 의 주소는 VM 내부 IP 라 쓸 수 없으므로 Ingress 에 external-dns.alpha.kubernetes.io/target
+# 어노테이션으로 macmini.thatsmycodename.com 을 지정한다 (CNAME).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: external-dns
+resources:
+  - namespace.yaml
+generators:
+  - secret-generator.yaml
+helmCharts:
+  - name: external-dns
+    repo: https://kubernetes-sigs.github.io/external-dns/
+    version: 1.23.0
+    releaseName: external-dns
+    namespace: external-dns
+    valuesFile: values.yaml

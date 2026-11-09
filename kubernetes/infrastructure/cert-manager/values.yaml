@@ -1,0 +1,17 @@
+crds:
+  enabled: true
+  keep: true   # 앱 삭제 시 CRD 와 함께 모든 인증서가 날아가는 것 방지
+# DNS-01 검증 시 Cloudflare 네임서버에 직접 물어 전파 지연을 줄인다
+dns01RecursiveNameservers: "1.1.1.1:53,1.0.0.1:53"
+dns01RecursiveNameserversOnly: true
+resources:
+  requests: { cpu: 10m, memory: 32Mi }
+  limits: { memory: 128Mi }
+webhook:
+  resources:
+    requests: { cpu: 10m, memory: 32Mi }
+    limits: { memory: 64Mi }
+cainjector:
+  resources:
+    requests: { cpu: 10m, memory: 32Mi }
+    limits: { memory: 128Mi }

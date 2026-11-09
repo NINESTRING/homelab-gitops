@@ -1,0 +1,18 @@
+# cert-manager + Let's Encrypt DNS-01(Cloudflare) 로 와일드카드 인증서 발급.
+# 순서: 차트(CRD 포함) → ClusterIssuer → Certificate. CR 들은 sync-wave 와 SkipDryRunOnMissingResource 로 CRD 설치 뒤에 적용된다.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - clusterissuer.yaml
+  - certificate-wildcard.yaml
+generators:
+  - secret-generator.yaml
+helmCharts:
+  - name: cert-manager
+    repo: https://charts.jetstack.io
+    version: v1.21.3
+    releaseName: cert-manager
+    namespace: cert-manager
+    includeCRDs: true
+    valuesFile: values.yaml

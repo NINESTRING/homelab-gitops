@@ -1,0 +1,20 @@
+# Traefik 기본 인증서. Traefik 이 kube-system 에 있으므로 Secret 도 kube-system 에 만든다.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-thatsmycodename-com
+  namespace: kube-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  secretName: wildcard-thatsmycodename-com-tls
+  issuerRef:
+    name: letsencrypt-staging   # 발급 확인 후 letsencrypt-prod 로 변경
+    kind: ClusterIssuer
+  commonName: "*.thatsmycodename.com"
+  dnsNames:
+    - "*.thatsmycodename.com"
+    - thatsmycodename.com
+  privateKey:
+    rotationPolicy: Always

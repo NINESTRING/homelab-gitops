@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+    name: cloudflare-api-token
+    namespace: external-dns
+type: Opaque
+stringData:
+    api-token: ENC[AES256_GCM,data:2pNm+Odi//3zO1CaYBdf2DI327eMt+lvY836bqQRPP2poL7CTu/ceC+fnFZFrERntQ0yspU=,iv:2ye6WG9UvONNizQEP3gpMa93oE6r8gisA4fRDQB2DY0=,tag:HIwtKiAbLsV051OTn2EMzw==,type:str]
+sops:
+    age:
+        - enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBubmNVYUtnTkxMdE4yVnJW
+            VzdtNWQyNTBrb1NSSWV4NHJXaFNHZkNPZkVNCjJwYUtKT3FSYnpuNzFtSzcwN2Vh
+            T1hhazFlcjljNFpoWXRURG5UaVAyd0UKLS0tIHFyYi82Z3piYVo4Ym91UnpvbzVZ
+            TEsvc1hQNXk0Ry9jcVBxV3FPdTAzYTQKsYNXSp243S9QCVvAEh1NjjVan/XEs8NF
+            mpI7EFwXWQTHidlePlfuxDNK3Ndd0KsOase3DiMpsSTswu5lb2uQaw==
+            -----END AGE ENCRYPTED FILE-----
+          recipient: age195dhv5j6us0n0vmy0hhug4608tv5tgapz6h73y64e4hxgypr3u0sndle8c
+    encrypted_regex: ^(data|stringData)$
+    lastmodified: "2026-11-09T02:20:14Z"
+    mac: ENC[AES256_GCM,data:m2Qgjr62sIB+zWxqO40LLnukzeWj3yXO5SQ4ni6lsziErIynUcdjDqyik56GkaTkqUrZ9l+ots5Jt9AFIUum6PA0Vmzr4ey2Q9ty5GqDtAWLj3EJUUvCPx4wOG1yGFEApzdXffJpKOVGsRyYW021mBoDS0zf5aqLixVPXQKZ0uA=,iv:s1M12htrYKch3H7YZVgnkegZYq6NVCuXaN/EBzjSVBY=,tag:wJ1YrlCivSUHrmq2iZ/9Bg==,type:str]
+    version: 3.13.3

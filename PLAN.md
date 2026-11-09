@@ -98,16 +98,16 @@ homelab-gitops/
 - [x] age 키 생성, `.sops.yaml` 작성 (2026-11-09). **개인 키 `~/.config/sops/age/keys.txt` 를 패스워드 매니저에 백업할 것**
 - [x] `terraform/10-cluster-bootstrap`: helm provider로 Argo CD 설치, age 키를 Secret으로 주입, root Application(app-of-apps) 생성 (2026-11-09 apply. Argo CD 차트 10.17.0, KSOPS v4.5.1. age 키는 kubectl server-side apply 로 주입해 state 에 남기지 않음)
 - [x] GitHub Actions: `terraform fmt -check`, `validate` (2026-11-09). PR `plan` 코멘트는 제외: 클러스터가 Tailscale 뒤라 러너가 붙을 수 없고, Cloudflare 토큰을 GitHub 에 올리지 않기로 함
-- 완료 기준: `terraform apply` 한 번으로 빈 클러스터에 Argo CD가 뜨고, 레포의 `kubernetes/bootstrap`을 바라보며 Synced 상태 — Argo CD 설치 확인. **main 을 GitHub 에 push 한 뒤 root App Synced 확인하면 충족**
+- 완료 기준: `terraform apply` 한 번으로 빈 클러스터에 Argo CD가 뜨고, 레포의 `kubernetes/bootstrap`을 바라보며 Synced 상태 — **충족 (2026-11-09, push 후 root App Synced·Healthy)**
 
 ### Phase 3. 클러스터 기본 인프라 (GitOps) (이틀)
 Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
-- [ ] cert-manager + Cloudflare DNS-01 ClusterIssuer, 와일드카드 인증서
-- [ ] external-dns (Cloudflare) — Ingress 만들면 DNS 자동 생성
-- [ ] Traefik 설정(HelmChartConfig) — 기본 TLS, 리다이렉트
-- [ ] KSOPS 플러그인으로 암호화된 Secret 복호화 확인
-- [ ] metrics-server, reloader
-- [ ] Argo CD 자체를 Ingress + TLS로 노출 (`argocd.thatsmycodename.com`, Tailscale 내부 전용)
+- [ ] cert-manager + Cloudflare DNS-01 ClusterIssuer, 와일드카드 인증서 — 매니페스트 작성(2026-11-09, 차트 v1.21.3, staging 발급기로 시작). 발급 확인 후 prod 전환 남음
+- [ ] external-dns (Cloudflare) — Ingress 만들면 DNS 자동 생성 — 매니페스트 작성(2026-11-09, 차트 1.23.0, CNAME → macmini). 동작 확인 남음
+- [ ] Traefik 설정(HelmChartConfig) — 기본 TLS, 리다이렉트 — 매니페스트 작성(2026-11-09). 동작 확인 남음
+- [ ] KSOPS 플러그인으로 암호화된 Secret 복호화 확인 — Cloudflare 토큰 Secret 2개를 `.sops.yaml` 규칙으로 암호화해 커밋(2026-11-09). Argo CD 복호화 확인 남음
+- [ ] metrics-server(k3s 내장, v0.9.0 확인), reloader — 매니페스트 작성(2026-11-09, 차트 2.2.19)
+- [x] Argo CD 자체를 Ingress + TLS로 노출 (`argocd.thatsmycodename.com`, Tailscale 내부 전용) — Terraform values 에 Ingress 추가, apply 완료(2026-11-09). DNS/인증서는 위 항목에 의존
 - 완료 기준: 테스트 앱(whoami) 하나를 `kubernetes/apps/`에 커밋하면 DNS, 인증서, Ingress까지 자동으로 생겨 브라우저에서 HTTPS로 열림
 
 ### Phase 4. SSO (이틀)
@@ -153,7 +153,6 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 
 ## 6. 바로 다음 할 일
 
-1. main push → Argo CD root App Synced 확인 → Phase 2 닫기
-2. Phase 3: cert-manager + Cloudflare DNS-01 ClusterIssuer + 와일드카드 인증서 (`kubernetes/infrastructure/cert-manager`)
-3. Phase 3: external-dns (CNAME 대상 `macmini.thatsmycodename.com`), Traefik HelmChartConfig, KSOPS 복호화 검증
-4. Phase 3: Argo CD Ingress `argocd.thatsmycodename.com`, whoami 테스트 앱
+1. Phase 3 매니페스트 push → Argo CD 가 infrastructure/apps 동기화하는지 확인 → KSOPS 복호화, 인증서 발급(staging), DNS 생성, whoami HTTPS 확인
+2. staging 인증서 확인되면 `letsencrypt-prod` 로 전환
+3. Phase 3 완료 기준 충족 후 Phase 4(Authentik) 착수
