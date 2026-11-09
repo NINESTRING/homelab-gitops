@@ -10,6 +10,7 @@ resource "kubernetes_namespace_v1" "argocd" {
 # KSOPS 가 Secret 을 복호화할 때 쓰는 age 개인 키.
 # kubernetes_secret_v1 은 refresh 때 클러스터 값을 읽어 state 에 평문으로 남기므로 쓰지 않는다.
 # 대신 Terraform 이 kubectl 을 호출해 넣고, state 에는 키 파일의 sha256 만 저장한다.
+# server-side apply 를 써서 last-applied-configuration 어노테이션에 키 사본이 남지 않게 한다.
 # 키 파일이 바뀌면 해시가 바뀌어 다시 적용된다.
 locals {
   sops_age_key_path = pathexpand(var.sops_age_key_file)
@@ -24,7 +25,7 @@ resource "terraform_data" "sops_age" {
     command     = <<-EOT
       kubectl -n ${kubernetes_namespace_v1.argocd.metadata[0].name} create secret generic sops-age \
         --from-file=keys.txt='${local.sops_age_key_path}' --dry-run=client -o yaml \
-      | kubectl apply -f -
+      | kubectl apply --server-side --field-manager=terraform -f -
     EOT
   }
 
