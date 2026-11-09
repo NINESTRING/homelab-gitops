@@ -1,0 +1,59 @@
+# 비밀값은 Secret authentik-secrets 에서 env 로 주입한다 (명시 env 가 envFrom 보다 우선).
+global:
+  env:
+    - name: AUTHENTIK_SECRET_KEY
+      valueFrom: { secretKeyRef: { name: authentik-secrets, key: AUTHENTIK_SECRET_KEY } }
+    - name: AUTHENTIK_POSTGRESQL__PASSWORD
+      valueFrom: { secretKeyRef: { name: authentik-secrets, key: AUTHENTIK_POSTGRESQL__PASSWORD } }
+    - name: AUTHENTIK_BOOTSTRAP_EMAIL
+      valueFrom: { secretKeyRef: { name: authentik-secrets, key: AUTHENTIK_BOOTSTRAP_EMAIL } }
+    - name: AUTHENTIK_BOOTSTRAP_PASSWORD
+      valueFrom: { secretKeyRef: { name: authentik-secrets, key: AUTHENTIK_BOOTSTRAP_PASSWORD } }
+    - name: AUTHENTIK_BOOTSTRAP_TOKEN
+      valueFrom: { secretKeyRef: { name: authentik-secrets, key: AUTHENTIK_BOOTSTRAP_TOKEN } }
+
+authentik:
+  log_level: info
+  error_reporting:
+    enabled: false
+  postgresql:
+    host: authentik-postgresql
+    name: authentik
+    user: authentik
+
+server:
+  replicas: 1
+  resources:
+    requests: { cpu: 100m, memory: 512Mi }
+    limits: { memory: 1Gi }
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      external-dns.kubernetes.io/target: macmini.thatsmycodename.com
+    hosts:
+      - auth.thatsmycodename.com
+    # TLS 는 Traefik 기본 인증서(와일드카드)가 종료하므로 tls 블록 없음
+
+worker:
+  replicas: 1
+  resources:
+    requests: { cpu: 50m, memory: 384Mi }
+    limits: { memory: 768Mi }
+
+postgresql:
+  enabled: true
+  auth:
+    username: authentik
+    database: authentik
+    existingSecret: authentik-secrets
+    secretKeys:
+      adminPasswordKey: POSTGRES_ADMIN_PASSWORD
+      userPasswordKey: AUTHENTIK_POSTGRESQL__PASSWORD
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi   # local-path-provisioner
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { memory: 512Mi }

@@ -1,0 +1,16 @@
+# Authentik (SSO IdP). 서버 + 워커 + PostgreSQL(차트 내장). Redis 는 2026.x 부터 불필요.
+# 비밀값은 secrets.sops.yaml → ksops → Secret authentik-secrets. 설정은 Terraform 20-authentik 이 API 토큰으로 관리한다.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: authentik
+resources:
+  - namespace.yaml
+generators:
+  - secret-generator.yaml
+helmCharts:
+  - name: authentik
+    repo: https://charts.goauthentik.io
+    version: 2026.8.5
+    releaseName: authentik
+    namespace: authentik
+    valuesFile: values.yaml
