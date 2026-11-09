@@ -1,0 +1,20 @@
+# Loki(단일 바이너리, 파일시스템 저장, 7일 보존) + Alloy(모든 파드 로그를 API 로 tail 해 Loki 로 전송).
+# 단일 노드라 Alloy 는 Deployment 1개면 충분하다 (DaemonSet 불필요).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: logging
+resources:
+  - namespace.yaml
+helmCharts:
+  - name: loki
+    repo: https://grafana.github.io/helm-charts
+    version: 7.5.0
+    releaseName: loki
+    namespace: logging
+    valuesFile: loki-values.yaml
+  - name: alloy
+    repo: https://grafana.github.io/helm-charts
+    version: 1.15.0
+    releaseName: alloy
+    namespace: logging
+    valuesFile: alloy-values.yaml

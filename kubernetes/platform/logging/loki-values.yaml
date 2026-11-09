@@ -1,0 +1,48 @@
+deploymentMode: SingleBinary
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: true
+    size: 10Gi
+  resources:
+    requests: { cpu: 50m, memory: 256Mi }
+    limits: { memory: 768Mi }
+
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: filesystem
+  schemaConfig:
+    configs:
+      - from: "2026-01-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+  limits_config:
+    retention_period: 168h   # 7일
+    reject_old_samples: true
+    reject_old_samples_max_age: 168h
+  compactor:
+    retention_enabled: true
+    delete_request_store: filesystem
+    working_directory: /var/loki/retention
+  analytics:
+    reporting_enabled: false
+
+# SimpleScalable 컴포넌트와 부가 기능 전부 끔
+backend: { replicas: 0 }
+read: { replicas: 0 }
+write: { replicas: 0 }
+gateway: { enabled: false }
+chunksCache: { enabled: false }     # 기본 1GB 메모리 → 끔
+resultsCache: { enabled: false }
+lokiCanary: { enabled: false }
+test: { enabled: false }
+monitoring:
+  serviceMonitor:
+    enabled: true
