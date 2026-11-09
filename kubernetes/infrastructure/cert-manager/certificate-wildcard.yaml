@@ -10,7 +10,7 @@ metadata:
 spec:
   secretName: wildcard-thatsmycodename-com-tls
   issuerRef:
-    name: letsencrypt-staging   # 발급 확인 후 letsencrypt-prod 로 변경
+    name: letsencrypt-prod   # staging 발급 성공 확인(2026-11-09) 후 prod 로 전환
     kind: ClusterIssuer
   commonName: "*.thatsmycodename.com"
   dnsNames:

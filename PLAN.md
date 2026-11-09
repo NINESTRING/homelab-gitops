@@ -102,11 +102,11 @@ homelab-gitops/
 
 ### Phase 3. 클러스터 기본 인프라 (GitOps) (이틀)
 Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
-- [ ] cert-manager + Cloudflare DNS-01 ClusterIssuer, 와일드카드 인증서 — 매니페스트 작성(2026-11-09, 차트 v1.21.3, staging 발급기로 시작). 발급 확인 후 prod 전환 남음
-- [ ] external-dns (Cloudflare) — Ingress 만들면 DNS 자동 생성 — 매니페스트 작성(2026-11-09, 차트 1.23.0, CNAME → macmini). 동작 확인 남음
-- [ ] Traefik 설정(HelmChartConfig) — 기본 TLS, 리다이렉트 — 매니페스트 작성(2026-11-09). 동작 확인 남음
-- [ ] KSOPS 플러그인으로 암호화된 Secret 복호화 확인 — Cloudflare 토큰 Secret 2개를 `.sops.yaml` 규칙으로 암호화해 커밋(2026-11-09). Argo CD 복호화 확인 남음
-- [ ] metrics-server(k3s 내장, v0.9.0 확인), reloader — 매니페스트 작성(2026-11-09, 차트 2.2.19)
+- [x] cert-manager + Cloudflare DNS-01 ClusterIssuer, 와일드카드 인증서 (2026-11-09 staging 발급 성공 → prod 전환 커밋. 집 네트워크에서 1.1.1.1 이 막혀 있어 자체 확인 리졸버는 1.0.0.1/8.8.8.8)
+- [x] external-dns (Cloudflare) — Ingress 만들면 DNS 자동 생성 (2026-11-09 확인. v0.23 은 어노테이션 접두사가 `external-dns.kubernetes.io/` 로 바뀜, alpha 아님)
+- [x] Traefik 설정(HelmChartConfig) — 기본 TLS, 리다이렉트 (2026-11-09 확인. 차트 v41 은 `ports.web.http.redirections` 경로)
+- [x] KSOPS 플러그인으로 암호화된 Secret 복호화 확인 (2026-11-09. ksops 이미지의 kustomize 는 쓰지 않고 Argo CD 내장 kustomize 사용)
+- [x] metrics-server(k3s 내장, v0.9.0), reloader 2.2.19 (2026-11-09 Synced)
 - [x] Argo CD 자체를 Ingress + TLS로 노출 (`argocd.thatsmycodename.com`, Tailscale 내부 전용) — Terraform values 에 Ingress 추가, apply 완료(2026-11-09). DNS/인증서는 위 항목에 의존
 - 완료 기준: 테스트 앱(whoami) 하나를 `kubernetes/apps/`에 커밋하면 DNS, 인증서, Ingress까지 자동으로 생겨 브라우저에서 HTTPS로 열림
 
@@ -153,6 +153,5 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 
 ## 6. 바로 다음 할 일
 
-1. Phase 3 매니페스트 push → Argo CD 가 infrastructure/apps 동기화하는지 확인 → KSOPS 복호화, 인증서 발급(staging), DNS 생성, whoami HTTPS 확인
-2. staging 인증서 확인되면 `letsencrypt-prod` 로 전환
-3. Phase 3 완료 기준 충족 후 Phase 4(Authentik) 착수
+1. push → whoami CNAME 생성, prod 인증서 발급, 브라우저에서 `https://whoami.thatsmycodename.com` 자물쇠 확인 → Phase 3 닫기
+2. Phase 4(Authentik) 착수
