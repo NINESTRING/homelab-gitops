@@ -115,9 +115,9 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 - [x] 초기 admin 부트스트랩 비밀번호/토큰은 SOPS로 관리 (`kubernetes/platform/authentik/secrets.sops.yaml`, 2026-11-09)
 - [x] `terraform/20-authentik`: Authentik provider로 그룹, OIDC 프로바이더, 애플리케이션 정의 (2026-11-09 apply: admins 그룹, Argo CD OIDC, whoami proxy. API 토큰은 sops provider 로 SOPS 파일에서 읽음. Grafana 는 Phase 5 에서 추가)
 - [x] Argo CD OIDC 연동 (직접 OIDC, Dex 미사용), RBAC을 Authentik 그룹에 매핑 (2026-11-09 apply)
-- [ ] Traefik forward auth 미들웨어 — OIDC 미지원 앱 보호용 Authentik outpost — Middleware/IngressRoute, whoami proxy provider 적용(2026-11-09, 내장 Outpost). whoami Ingress 어노테이션 커밋 후 브라우저 확인 남음
-- [ ] (선택) Passkey/WebAuthn, TOTP 정책
-- 완료 기준: Argo CD와 whoami가 Authentik 로그인 한 번으로 열림. 새 앱 추가 시 Terraform 리소스 하나 + Ingress 어노테이션만으로 SSO 적용
+- [x] Traefik forward auth 미들웨어 — OIDC 미지원 앱 보호용 Authentik outpost (2026-11-09 브라우저 확인. 내장 Outpost 를 Terraform 으로 import 해 authentik_host 지정)
+- [ ] (선택) Passkey/WebAuthn, TOTP 정책 — Phase 6 에서 Cloudflare Tunnel 로 공개하는 앱이 생기면 그때
+- 완료 기준: Argo CD와 whoami가 Authentik 로그인 한 번으로 열림. 새 앱 추가 시 Terraform 리소스 하나 + Ingress 어노테이션만으로 SSO 적용 — **충족 (2026-11-09)**
 
 ### Phase 5. 관측과 백업 (이틀)
 - [ ] kube-prometheus-stack, Grafana OIDC(Authentik) 연동
@@ -153,6 +153,6 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 
 ## 6. 바로 다음 할 일
 
-1. Phase 4: Authentik 배포 (`kubernetes/platform/authentik`, PostgreSQL + Redis, 부트스트랩 비밀번호/토큰은 SOPS)
-2. Phase 4: `terraform/20-authentik` 으로 그룹, OIDC 프로바이더, 애플리케이션(Argo CD, Grafana)
-3. Phase 4: Argo CD OIDC 연동, Traefik forward auth 미들웨어로 whoami 보호
+1. (정리) Argo CD 로컬 admin 로그인 비활성화 검토 (`configs.params.admin.enabled: false`) — SSO 가 안정되면
+2. Phase 5: kube-prometheus-stack + Grafana OIDC(Authentik), Loki, Alertmanager 알림 채널 결정
+3. Phase 5: Velero → R2 `velero` 버킷, 일일 스케줄, 복구 리허설
