@@ -60,7 +60,10 @@ spec:
           resources:
             requests: { cpu: 50m, memory: 128Mi }
             limits: { memory: 384Mi }
+          # /app/config 는 쓰기 가능해야 한다: Homepage 가 시작 시 빠진 설정 파일(proxmox.yaml 등)을 스켈레톤에서 복사한다.
+          # emptyDir 를 먼저 깔고 그 위에 ConfigMap 파일을 subPath 로 얹는다 (kubelet 이 경로 순으로 마운트).
           volumeMounts:
+            - { name: config-dir, mountPath: /app/config }
             - { name: config, mountPath: /app/config/kubernetes.yaml, subPath: kubernetes.yaml }
             - { name: config, mountPath: /app/config/settings.yaml, subPath: settings.yaml }
             - { name: config, mountPath: /app/config/services.yaml, subPath: services.yaml }
@@ -69,10 +72,9 @@ spec:
             - { name: config, mountPath: /app/config/docker.yaml, subPath: docker.yaml }
             - { name: config, mountPath: /app/config/custom.css, subPath: custom.css }
             - { name: config, mountPath: /app/config/custom.js, subPath: custom.js }
-            - { name: logs, mountPath: /app/config/logs }
       volumes:
+        - name: config-dir
+          emptyDir: {}
         - name: config
           configMap:
             name: homepage-config
-        - name: logs
-          emptyDir: {}
