@@ -1,4 +1,6 @@
 # R2 는 S3 호환이라 aws 플러그인을 쓴다. Velero 1.18 ↔ 플러그인 v1.14
+# PV 데이터는 kopia 가 velero-repo-credentials(SOPS) 의 비밀번호로 암호화한다. 매니페스트 tarball 은 Velero 가 암호화하지 않으므로
+# R2 토큰은 velero 버킷 전용으로 발급했고, Secret 이 든 네임스페이스 백업은 그 토큰 보유자가 읽을 수 있다는 점을 전제로 한다.
 initContainers:
   - name: velero-plugin-for-aws
     image: velero/velero-plugin-for-aws:v1.14.4
@@ -55,6 +57,7 @@ schedules:
     template:
       ttl: 720h   # 30일 보관
       storageLocation: default
-      # 재생성 가능한 것(kube-system, 로그, 메트릭)은 제외. 상태가 있는 앱(authentik, grafana 등)만
-      excludedNamespaces: [kube-system, logging, whoami]
+      # 재생성 가능한 것은 제외: kube-system, 로그, whoami, 그리고 argocd (Terraform+Git 으로 재구축.
+      # 무엇보다 argocd 에는 age 마스터 키 Secret 이 있어 백업에 들어가면 안 된다)
+      excludedNamespaces: [kube-system, logging, whoami, argocd]
       excludedResources: [events, events.events.k8s.io]
