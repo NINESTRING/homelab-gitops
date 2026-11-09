@@ -94,11 +94,11 @@ homelab-gitops/
 - 완료 기준: Mac mini를 재부팅해도 손대지 않고 VM과 k3s가 올라옴. 노트북에서 Tailscale 경유로 `kubectl get nodes` 성공 — **충족 (2026-11-08)**
 
 ### Phase 2. Terraform 기반 + GitOps 부트스트랩 (하루)
-- [ ] `terraform/00-foundation`: 원격 state 백엔드, Cloudflare zone 데이터, 기본 DNS 레코드, Tailscale ACL — 코드 작성, init/validate 완료(2026-11-09). apply 는 Cloudflare API 토큰 + Tailscale API 키를 `.envrc` 에 채운 뒤
+- [x] `terraform/00-foundation`: 원격 state 백엔드, Cloudflare zone 데이터, 기본 DNS 레코드, Tailscale ACL (2026-11-09 apply. `macmini.thatsmycodename.com` A 레코드, R2 `velero` 버킷, Tailscale 정책 import 후 관리)
 - [x] age 키 생성, `.sops.yaml` 작성 (2026-11-09). **개인 키 `~/.config/sops/age/keys.txt` 를 패스워드 매니저에 백업할 것**
-- [ ] `terraform/10-cluster-bootstrap`: helm provider로 Argo CD 설치, age 키를 Secret으로 주입, root Application(app-of-apps) 생성 — 코드 작성 완료(2026-11-09), apply 진행
+- [x] `terraform/10-cluster-bootstrap`: helm provider로 Argo CD 설치, age 키를 Secret으로 주입, root Application(app-of-apps) 생성 (2026-11-09 apply. Argo CD 차트 10.17.0, KSOPS v4.5.1. age 키는 kubectl server-side apply 로 주입해 state 에 남기지 않음)
 - [x] GitHub Actions: `terraform fmt -check`, `validate` (2026-11-09). PR `plan` 코멘트는 제외: 클러스터가 Tailscale 뒤라 러너가 붙을 수 없고, Cloudflare 토큰을 GitHub 에 올리지 않기로 함
-- 완료 기준: `terraform apply` 한 번으로 빈 클러스터에 Argo CD가 뜨고, 레포의 `kubernetes/bootstrap`을 바라보며 Synced 상태
+- 완료 기준: `terraform apply` 한 번으로 빈 클러스터에 Argo CD가 뜨고, 레포의 `kubernetes/bootstrap`을 바라보며 Synced 상태 — Argo CD 설치 확인. **main 을 GitHub 에 push 한 뒤 root App Synced 확인하면 충족**
 
 ### Phase 3. 클러스터 기본 인프라 (GitOps) (이틀)
 Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
@@ -153,7 +153,7 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 
 ## 6. 바로 다음 할 일
 
-1. Phase 0 잔여: ADR 표 선택 확정 (스토리지 디스크 위치, 백업 대상)
-2. Phase 2: `terraform/00-foundation` (R2 백엔드, Cloudflare zone, 기본 DNS, Tailscale ACL)
-3. Phase 2: age 키 생성 + `.sops.yaml`
-4. Phase 2: `terraform/10-cluster-bootstrap` (Argo CD, age Secret, root App)
+1. main push → Argo CD root App Synced 확인 → Phase 2 닫기
+2. Phase 3: cert-manager + Cloudflare DNS-01 ClusterIssuer + 와일드카드 인증서 (`kubernetes/infrastructure/cert-manager`)
+3. Phase 3: external-dns (CNAME 대상 `macmini.thatsmycodename.com`), Traefik HelmChartConfig, KSOPS 복호화 검증
+4. Phase 3: Argo CD Ingress `argocd.thatsmycodename.com`, whoami 테스트 앱
