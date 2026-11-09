@@ -16,12 +16,25 @@ spec:
           labels: { severity: warning }
           annotations:
             summary: "Mac mini 디스크 사용량 {{ $value | humanizePercentage }}"
+        # macOS 는 free 페이지를 거의 0 으로 유지하므로 free/total 은 항상 95% 이상이 나온다(오탐).
+        # Activity Monitor 의 "Memory Used" = app(internal - purgeable) + wired + compressed 를 쓴다.
         - alert: MacMiniMemoryPressure
-          expr: (1 - node_memory_free_bytes{job="macmini-host"} / node_memory_total_bytes{job="macmini-host"}) > 0.95
+          expr: |
+            (
+              node_memory_internal_bytes{job="macmini-host"} - node_memory_purgeable_bytes{job="macmini-host"}
+              + node_memory_wired_bytes{job="macmini-host"} + node_memory_compressed_bytes{job="macmini-host"}
+            ) / node_memory_total_bytes{job="macmini-host"} > 0.9
           for: 15m
           labels: { severity: warning }
           annotations:
-            summary: "Mac mini 메모리 사용량 {{ $value | humanizePercentage }}"
+            summary: "Mac mini 메모리 사용량 {{ $value | humanizePercentage }} (Activity Monitor 기준)"
+        # 압축만으로 못 버티고 실제 스왑아웃이 지속될 때만 울린다 (1MB/s 이상 10분).
+        - alert: MacMiniSwapping
+          expr: rate(node_memory_swapped_out_bytes_total{job="macmini-host"}[10m]) > 1e6
+          for: 10m
+          labels: { severity: warning }
+          annotations:
+            summary: "Mac mini 스왑아웃 지속 중 {{ $value | humanize }}B/s"
         - alert: MacMiniHostExporterDown
           expr: up{job="macmini-host"} == 0
           for: 10m
