@@ -5,6 +5,7 @@ kind: Kustomization
 namespace: logging
 resources:
   - namespace.yaml
+  - networkpolicy.yaml
 helmCharts:
   - name: loki
     repo: https://grafana.github.io/helm-charts

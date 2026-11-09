@@ -1,0 +1,22 @@
+# Loki 는 인증이 없으므로(auth_enabled: false) 네트워크 레벨에서 접근을 제한한다.
+# 허용: 같은 네임스페이스(Alloy 가 push), monitoring 네임스페이스(Grafana 조회, Prometheus 메트릭 수집). 그 외 전부 차단.
+# k3s 는 kube-router 네트워크 정책 컨트롤러를 내장해 NetworkPolicy 를 강제한다.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: loki-ingress
+  namespace: logging
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: loki
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector: {}   # logging 네임스페이스 안
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - port: 3100   # HTTP (push, query, metrics)
+        - port: 9095   # gRPC (단일 바이너리 내부)
