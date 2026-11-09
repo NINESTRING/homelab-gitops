@@ -10,6 +10,9 @@ resource "authentik_provider_oauth2" "argocd" {
   authorization_flow = data.authentik_flow.authorization.id
   invalidation_flow  = data.authentik_flow.invalidation.id
   property_mappings  = data.authentik_property_mapping_provider_scope.oidc.ids
+  signing_key        = data.authentik_certificate_key_pair.signing.id
+  # Authentik 2026 부터 명시 필요. 비워 두면 "Invalid grant_type for provider" 로 모든 로그인이 거부된다.
+  grant_types = ["authorization_code", "refresh_token"]
 
   allowed_redirect_uris = [
     { matching_mode = "strict", url = "https://${local.argocd_host}/auth/callback" },

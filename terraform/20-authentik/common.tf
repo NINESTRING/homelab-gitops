@@ -16,6 +16,11 @@ data "authentik_property_mapping_provider_scope" "oidc" {
   ]
 }
 
+# ID 토큰 서명용 인증서 (RS256). 비워 두면 HS256 이라 Argo CD 가 거부한다.
+data "authentik_certificate_key_pair" "signing" {
+  name = "authentik Self-signed Certificate"
+}
+
 # 내장 Outpost. proxy provider 를 여기에 붙이면 authentik-server 가 forward auth 를 처리한다.
 data "authentik_outpost" "embedded" {
   name = "authentik Embedded Outpost"
