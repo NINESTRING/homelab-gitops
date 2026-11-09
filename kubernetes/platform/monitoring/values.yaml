@@ -97,6 +97,13 @@ grafana:
 
 # ---------------------------------------------------------------- 기타 리소스 제한
 prometheusOperator:
+  # v0.95.1 이미지는 amd64 만 올라가 있어 arm64 에서 풀 실패 (2026-11-09 확인). arm64 가 있는 v0.94.1 로 고정.
+  # 0.95.x 태그에 arm64 가 올라오면 이 두 줄을 지운다 (Renovate 가 차트를 올릴 때 확인).
+  image:
+    tag: v0.94.1
+  prometheusConfigReloader:
+    image:
+      tag: v0.94.1
   resources:
     requests: { cpu: 20m, memory: 64Mi }
     limits: { memory: 256Mi }
