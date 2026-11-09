@@ -15,8 +15,7 @@ registry: txt
 txtOwnerId: homelab
 txtPrefix: externaldns-  # CNAME 과 같은 이름의 TXT 는 만들 수 없으므로 접두사 필요
 interval: 1m
-extraArgs:
-  - --cloudflare-proxied=false
+# Cloudflare 프록시(주황 구름)는 기본 꺼짐. 켜려면 extraArgs: [--cloudflare-proxied]
 resources:
   requests: { cpu: 10m, memory: 32Mi }
   limits: { memory: 64Mi }
