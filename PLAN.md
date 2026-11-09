@@ -108,7 +108,7 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 - [x] KSOPS 플러그인으로 암호화된 Secret 복호화 확인 (2026-11-09. ksops 이미지의 kustomize 는 쓰지 않고 Argo CD 내장 kustomize 사용)
 - [x] metrics-server(k3s 내장, v0.9.0), reloader 2.2.19 (2026-11-09 Synced)
 - [x] Argo CD 자체를 Ingress + TLS로 노출 (`argocd.thatsmycodename.com`, Tailscale 내부 전용) — Terraform values 에 Ingress 추가, apply 완료(2026-11-09). DNS/인증서는 위 항목에 의존
-- 완료 기준: 테스트 앱(whoami) 하나를 `kubernetes/apps/`에 커밋하면 DNS, 인증서, Ingress까지 자동으로 생겨 브라우저에서 HTTPS로 열림
+- 완료 기준: 테스트 앱(whoami) 하나를 `kubernetes/apps/`에 커밋하면 DNS, 인증서, Ingress까지 자동으로 생겨 브라우저에서 HTTPS로 열림 — **충족 (2026-11-09, prod 인증서, whoami/argocd CNAME, HTTP→HTTPS 리다이렉트 확인)**
 
 ### Phase 4. SSO (이틀)
 - [ ] Authentik 배포 (Helm, PostgreSQL + Redis 포함), Ingress `auth.thatsmycodename.com`
@@ -153,5 +153,6 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 
 ## 6. 바로 다음 할 일
 
-1. push → whoami CNAME 생성, prod 인증서 발급, 브라우저에서 `https://whoami.thatsmycodename.com` 자물쇠 확인 → Phase 3 닫기
-2. Phase 4(Authentik) 착수
+1. Phase 4: Authentik 배포 (`kubernetes/platform/authentik`, PostgreSQL + Redis, 부트스트랩 비밀번호/토큰은 SOPS)
+2. Phase 4: `terraform/20-authentik` 으로 그룹, OIDC 프로바이더, 애플리케이션(Argo CD, Grafana)
+3. Phase 4: Argo CD OIDC 연동, Traefik forward auth 미들웨어로 whoami 보호
