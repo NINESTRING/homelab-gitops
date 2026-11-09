@@ -42,10 +42,8 @@ repoServer:
       volumeMounts:
         - mountPath: /custom-tools
           name: custom-tools
+  # kustomize 는 Argo CD 내장 버전을 쓴다. ksops 이미지의 kustomize(v5.3)는 `helm version -c` 를 호출해 Helm 3 에서 실패한다.
   volumeMounts:
-    - mountPath: /usr/local/bin/kustomize
-      name: custom-tools
-      subPath: kustomize
     - mountPath: /usr/local/bin/ksops
       name: custom-tools
       subPath: ksops
