@@ -11,7 +11,7 @@ spec:
     - name: homelab.host
       rules:
         - alert: MacMiniDiskAlmostFull
-          expr: (1 - node_filesystem_avail_bytes{job="macmini-host",mountpoint="/System/Volumes/Data"} / node_filesystem_size_bytes{job="macmini-host",mountpoint="/System/Volumes/Data"}) > 0.8
+          expr: (1 - node_filesystem_avail_bytes{job="node-exporter",instance="macmini",mountpoint="/System/Volumes/Data"} / node_filesystem_size_bytes{job="node-exporter",instance="macmini",mountpoint="/System/Volumes/Data"}) > 0.8
           for: 15m
           labels: { severity: warning }
           annotations:
@@ -21,22 +21,22 @@ spec:
         - alert: MacMiniMemoryPressure
           expr: |
             (
-              node_memory_internal_bytes{job="macmini-host"} - node_memory_purgeable_bytes{job="macmini-host"}
-              + node_memory_wired_bytes{job="macmini-host"} + node_memory_compressed_bytes{job="macmini-host"}
-            ) / node_memory_total_bytes{job="macmini-host"} > 0.9
+              node_memory_internal_bytes{job="node-exporter",instance="macmini"} - node_memory_purgeable_bytes{job="node-exporter",instance="macmini"}
+              + node_memory_wired_bytes{job="node-exporter",instance="macmini"} + node_memory_compressed_bytes{job="node-exporter",instance="macmini"}
+            ) / node_memory_total_bytes{job="node-exporter",instance="macmini"} > 0.9
           for: 15m
           labels: { severity: warning }
           annotations:
             summary: "Mac mini 메모리 사용량 {{ $value | humanizePercentage }} (Activity Monitor 기준)"
         # 압축만으로 못 버티고 실제 스왑아웃이 지속될 때만 울린다 (1MB/s 이상 10분).
         - alert: MacMiniSwapping
-          expr: rate(node_memory_swapped_out_bytes_total{job="macmini-host"}[10m]) > 1e6
+          expr: rate(node_memory_swapped_out_bytes_total{job="node-exporter",instance="macmini"}[10m]) > 1e6
           for: 10m
           labels: { severity: warning }
           annotations:
             summary: "Mac mini 스왑아웃 지속 중 {{ $value | humanize }}B/s"
         - alert: MacMiniHostExporterDown
-          expr: up{job="macmini-host"} == 0
+          expr: up{job="node-exporter",instance="macmini"} == 0
           for: 10m
           labels: { severity: warning }
           annotations:
@@ -44,7 +44,7 @@ spec:
     - name: homelab.cluster
       rules:
         - alert: VMDiskAlmostFull
-          expr: (1 - node_filesystem_avail_bytes{job="node-exporter",mountpoint="/"} / node_filesystem_size_bytes{job="node-exporter",mountpoint="/"}) > 0.8
+          expr: (1 - node_filesystem_avail_bytes{job="node-exporter",instance!="macmini",mountpoint="/"} / node_filesystem_size_bytes{job="node-exporter",instance!="macmini",mountpoint="/"}) > 0.8
           for: 15m
           labels: { severity: warning }
           annotations:

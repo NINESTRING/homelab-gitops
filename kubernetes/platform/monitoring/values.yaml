@@ -38,11 +38,13 @@ prometheus:
     probeSelectorNilUsesHelmValues: false
     scrapeConfigSelectorNilUsesHelmValues: false
     # macOS 호스트의 node_exporter (Homebrew). Lima 사용자 모드 네트워크에서 호스트는 192.168.5.2
+    # job 라벨을 node-exporter 로 맞춰야 기본 대시보드(Node Exporter / MacOS)와 기본 node 알림 룰이 호스트를 본다.
+    # 호스트 구분은 instance="macmini" 로 한다 (rules-homelab.yaml 도 이 라벨 기준).
     additionalScrapeConfigs:
       - job_name: macmini-host
         static_configs:
           - targets: ["192.168.5.2:9100"]
-            labels: { instance: macmini }
+            labels: { instance: macmini, job: node-exporter }
 
 # ---------------------------------------------------------------- Alertmanager
 alertmanager:
