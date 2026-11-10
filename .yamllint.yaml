@@ -1,0 +1,22 @@
+# CI(.github/workflows/kubernetes.yml)와 로컬에서 `yamllint .` 로 쓴다. 문법 오류와 중복 키를 잡는 게 목적이고 스타일은 느슨하게 둔다.
+extends: default
+ignore: |
+  .rendered/
+  .terraform/
+  charts/
+  *.sops.yaml
+rules:
+  line-length: disable
+  document-start: disable
+  comments-indentation: disable
+  comments:
+    min-spaces-from-content: 1
+  truthy:
+    check-keys: false        # GitHub Actions 의 `on:`
+  indentation:
+    spaces: consistent
+    indent-sequences: consistent
+  braces:
+    max-spaces-inside: 1
+  brackets:
+    max-spaces-inside: 1

@@ -1,0 +1,36 @@
+# 배포 중인 컨테이너 이미지의 취약점 보고 (trivy). 실패시키지 않고 실행 요약(Summary)에 표로 남긴다.
+# 수정 버전이 나와 있는 HIGH/CRITICAL 만 센다. 대응은 보통 차트/이미지 버전을 올리는 것 (Renovate PR).
+name: image-scan
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"   # 매주 월요일 09:00 KST
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["kubernetes/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: 렌더링
+        run: scripts/render.sh
+
+      - uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
+        with:
+          version: v0.76.2
+          cache: true
+
+      - name: 스캔
+        run: |
+          {
+            echo "## 이미지 취약점 (수정 가능한 HIGH/CRITICAL, linux/arm64)"
+            echo
+            scripts/images.sh | scripts/scan-images.sh
+          } >> "$GITHUB_STEP_SUMMARY"

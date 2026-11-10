@@ -29,3 +29,6 @@ bootstrap/lima/*.yaml.bak
 
 # direnv (자격 증명 포함, .envrc.example 만 커밋)
 .envrc
+
+# scripts/render.sh 출력
+.rendered/

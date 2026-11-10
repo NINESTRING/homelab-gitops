@@ -115,11 +115,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.pas
 와일드카드 인증서는 처음 staging 발급기로 받는다. 브라우저에서 "Let's Encrypt (STAGING)" 발급자가 보이면
 `certificate-wildcard.yaml` 의 `issuerRef.name` 을 `letsencrypt-prod` 로 바꿔 커밋한다.
 
-로컬 렌더링 검증 (ksops 는 로컬에 없으므로 `generators:` 가 있는 디렉터리는 그 줄을 뺀 사본으로):
-
-```sh
-kubectl kustomize --enable-helm kubernetes/apps/whoami
-```
+로컬 검증은 "Phase 7: CI" 절의 스크립트를 쓴다 (`scripts/render.sh`).
 
 ## Phase 4: SSO (Authentik)
 
@@ -182,6 +178,30 @@ PR 하나에 아래를 담으면 끝난다.
 6. 외부 공개가 필요한 앱만 Cloudflare Tunnel (아직 없음). 나머지는 Tailscale 안에서만 열린다
 
 Homepage 설정 변경: `kubernetes/apps/homepage/config/*.yaml` 수정 후 커밋. configMapGenerator 해시가 바뀌어 Pod 가 자동 재시작된다.
+
+## Phase 7: CI
+
+| 워크플로 | 언제 | 무엇 |
+|---|---|---|
+| `terraform` | `terraform/**` PR, main 푸시 | `fmt -check`, `validate` |
+| `kubernetes` | `kubernetes/**`, `scripts/**` PR, main 푸시 | yamllint, 전체 렌더링, kubeconform 스키마 검사(CR 포함), 모든 이미지의 `linux/arm64` 존재 확인 |
+| `image-scan` | 매주 월요일 09:00 KST, main 푸시, 수동 | trivy 로 배포 이미지의 수정 가능한 HIGH/CRITICAL 집계. 실패시키지 않고 실행 Summary 에 표로 남김 |
+
+CI 는 SOPS 시크릿을 복호화하지 않는다. 그래서 Secret 내용의 오류는 못 잡고, Argo CD 동기화 때 드러난다.
+main 에 직접 푸시하면 CI 결과와 무관하게 Argo CD 가 적용한다. 검사를 거치게 하려면 PR 로 올린다 (Renovate PR 은 항상 거친다).
+
+푸시 전에 같은 검사를 로컬에서 (`brew install kustomize kubeconform yamllint skopeo trivy`):
+
+```sh
+yamllint .
+scripts/render.sh                                   # → .rendered/ (gitignore)
+kubeconform -strict -summary -kubernetes-version 1.37.2 -skip CustomResourceDefinition -schema-location default \
+  -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' .rendered
+scripts/images.sh | scripts/check-arm64.sh          # arm64 없는 이미지 찾기
+scripts/images.sh | scripts/scan-images.sh          # 취약점 표
+```
+
+k3s 를 올리면 워크플로와 위 명령의 `-kubernetes-version` 도 맞춘다.
 
 ## Phase 7: 버전 갱신 (Renovate)
 
