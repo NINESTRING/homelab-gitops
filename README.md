@@ -4,6 +4,7 @@ M1 Mac mini(16GB) 홈서버. Terraform + Argo CD + Authentik SSO.
 도메인: `thatsmycodename.com`
 
 전체 계획과 단계별 체크리스트는 [PLAN.md](PLAN.md) 참고.
+장애 대응, 재부팅, 재구축 절차는 [docs/runbook.md](docs/runbook.md).
 
 ## 레이아웃
 

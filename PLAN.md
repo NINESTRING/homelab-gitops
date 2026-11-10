@@ -140,7 +140,7 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 ### Phase 7. 자동화와 운영 (지속)
 - [ ] Renovate로 Helm 차트/이미지/Terraform provider 버전 PR
 - [ ] kubeconform, yamllint, trivy(이미지 스캔) CI
-- [ ] 런북: 재부팅 절차, VM 재생성 절차, 클러스터 완전 재구축(DR) 절차를 README에
+- [x] 런북: 재부팅, VM 재생성, 완전 재구축(DR), 잠김 복구, 장애 진단, 만료 일정 → `docs/runbook.md` (2026-11-10. 재구축 절차는 리허설 전이라 미검증 표시)
 - [ ] 재구축 리허설: VM을 날리고 Phase 1~2 절차로 복구되는지 확인
 - 완료 기준: 레포 + age 키 + 백업만으로 처음부터 재구축 가능
 
