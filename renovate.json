@@ -1,0 +1,66 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommitsDisabled"],
+  "timezone": "Asia/Seoul",
+  "schedule": ["before 9am on saturday"],
+  "minimumReleaseAge": "3 days",
+  "prConcurrentLimit": 5,
+  "labels": ["renovate"],
+  "kubernetes": {
+    "managerFilePatterns": ["/^kubernetes/.+/deployment\\.ya?ml$/"]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "`*-values.yaml` 안의 `image: repo:tag` (ksops 등). 이름이 정확히 values.yaml 인 파일은 내장 helm-values 매니저가 처리한다",
+      "managerFilePatterns": ["/(^|/)[\\w-]+-values\\.ya?ml$/"],
+      "matchStrings": ["\\bimage:\\s*(?<depName>[\\w./-]+):(?<currentValue>[\\w.-]+)"],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Terraform 변수에 고정한 Helm 차트 버전. 바로 윗줄의 `# renovate:` 주석으로 지정",
+      "managerFilePatterns": ["/^terraform/.+\\.tf$/"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+registryUrl=(?<registryUrl>\\S+)\\s+depName=(?<depName>\\S+)\\s*\\n\\s*default\\s*=\\s*\"(?<currentValue>[^\"]+)\""
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Argo CD 가 배포하는 것(차트, 이미지)의 마이너/패치는 주 1회 PR 하나로. 머지하면 자동 배포된다",
+      "matchFileNames": ["kubernetes/**"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "kubernetes minor/patch"
+    },
+    {
+      "description": "Terraform 쪽은 머지해도 배포되지 않는다. 따로 묶고 안내를 붙인다",
+      "matchFileNames": ["terraform/**", ".mise.toml"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "terraform minor/patch",
+      "prBodyNotes": ["머지만으로는 반영되지 않습니다. 머지 후 해당 디렉터리에서 `terraform init -upgrade && terraform plan` 을 읽고 `apply` 하세요."]
+    },
+    {
+      "description": "Authentik 은 서버(차트)와 Terraform provider 가 같이 움직여야 한다. 항상 별도 PR",
+      "matchPackageNames": ["authentik", "goauthentik/authentik"],
+      "groupName": "authentik",
+      "prBodyNotes": ["차트를 먼저 머지해 서버가 올라온 것을 확인한 뒤 `terraform/20-authentik` 에서 plan 을 읽으세요. 릴리스 노트의 breaking change 확인 필수 (2026.x 에서 OAuth2 provider 의 `grant_types` 가 필수가 된 전례)."]
+    },
+    {
+      "matchPackageNames": ["kube-prometheus-stack"],
+      "prBodyNotes": ["`kubernetes/platform/monitoring/values.yaml` 에서 prometheus-operator / config-reloader 이미지를 `v0.94.1` 로 고정해 두었습니다 (v0.95.1 에 arm64 없음). 새 operator 버전에 arm64 가 있으면 고정을 지우고, 없으면 유지하세요."]
+    },
+    {
+      "matchPackageNames": ["velero", "velero/velero-plugin-for-aws"],
+      "prBodyNotes": ["Velero 본체와 aws 플러그인은 버전 짝이 있습니다 (플러그인 README 의 호환표). 둘 중 하나만 올리지 마세요."]
+    },
+    {
+      "matchDatasources": ["docker"],
+      "prBodyNotes": ["클러스터는 arm64 입니다. 새 태그에 `linux/arm64` 이미지가 있는지 확인하세요: `docker buildx imagetools inspect <image>:<tag>`"]
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "prBodyNotes": ["메이저 업데이트입니다. 릴리스 노트의 마이그레이션 절차를 읽고, 머지 전 백업이 최근인지 확인하세요 (`kubectl -n velero get backup`)."]
+    }
+  ]
+}

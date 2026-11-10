@@ -20,11 +20,13 @@ variable "gitops_revision" {
 variable "argocd_chart_version" {
   description = "argo/argo-cd Helm 차트 버전 (Renovate 가 갱신)"
   type        = string
-  default     = "10.17.0"
+  # renovate: datasource=helm registryUrl=https://argoproj.github.io/argo-helm depName=argo-cd
+  default = "10.17.0"
 }
 
 variable "argocd_apps_chart_version" {
   description = "argo/argocd-apps Helm 차트 버전. root Application 생성용"
   type        = string
-  default     = "2.0.7"
+  # renovate: datasource=helm registryUrl=https://argoproj.github.io/argo-helm depName=argocd-apps
+  default = "2.0.7"
 }

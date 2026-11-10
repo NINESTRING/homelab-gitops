@@ -138,7 +138,7 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 - 완료 기준: 새 앱 추가가 PR 하나로 끝남
 
 ### Phase 7. 자동화와 운영 (지속)
-- [ ] Renovate로 Helm 차트/이미지/Terraform provider 버전 PR
+- [ ] Renovate로 Helm 차트/이미지/Terraform provider 버전 PR — `renovate.json` 작성, 로컬 드라이런으로 전 항목 인식 확인(2026-11-10). GitHub 앱 설치와 첫 PR 확인 남음
 - [ ] kubeconform, yamllint, trivy(이미지 스캔) CI
 - [x] 런북: 재부팅, VM 재생성, 완전 재구축(DR), 잠김 복구, 장애 진단, 만료 일정 → `docs/runbook.md` (2026-11-10. 재구축 절차는 리허설 전이라 미검증 표시)
 - [ ] 재구축 리허설: VM을 날리고 Phase 1~2 절차로 복구되는지 확인

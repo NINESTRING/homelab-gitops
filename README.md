@@ -183,6 +183,29 @@ PR 하나에 아래를 담으면 끝난다.
 
 Homepage 설정 변경: `kubernetes/apps/homepage/config/*.yaml` 수정 후 커밋. configMapGenerator 해시가 바뀌어 Pod 가 자동 재시작된다.
 
+## Phase 7: 버전 갱신 (Renovate)
+
+[Renovate](https://github.com/apps/renovate) GitHub 앱이 `renovate.json` 을 읽어 매주 토요일 오전에 버전 갱신 PR 을 올린다.
+현재 상태는 레포의 "Dependency Dashboard" 이슈에서 본다. 릴리스 후 3일이 지난 버전만 제안한다.
+
+| PR | 내용 | 머지하면 |
+|---|---|---|
+| `kubernetes minor/patch` | `kubernetes/` 의 Helm 차트, 컨테이너 이미지 | Argo CD 가 자동 배포. 2장 점검(런북)으로 확인 |
+| `terraform minor/patch` | provider, Argo CD 차트(`variables.tf`), ksops 이미지, Terraform 본체 | **배포 안 됨.** 머지 후 해당 디렉터리에서 `terraform init -upgrade && terraform plan` 을 읽고 `apply` |
+| `authentik` | Authentik 차트와 Terraform provider | 차트 먼저 확인 후 `20-authentik` plan |
+| 메이저 업데이트 | 패키지마다 따로 | 릴리스 노트의 마이그레이션 절차 확인 후 |
+
+PR 본문에 패키지별 주의 사항이 붙는다 (arm64 이미지 확인, prometheus-operator 고정, Velero 플러그인 짝).
+새 버전 고정을 추가할 때: `kustomization.yaml` 의 `helmCharts`, `deployment.yaml` 의 `image:`, `*values.yaml` 의 `image: repo:tag` 는
+자동 인식된다. Terraform 변수에 차트 버전을 둘 때는 `default` 윗줄에 `# renovate: datasource=helm registryUrl=... depName=...` 주석을 단다.
+
+설정을 고친 뒤 검증 (어떤 의존성이 잡히는지 확인, PR 은 만들지 않음):
+
+```sh
+npx --yes --package renovate -- renovate-config-validator renovate.json
+RENOVATE_GITHUB_COM_TOKEN=$(gh auth token) LOG_LEVEL=debug npx --yes renovate --platform=local --dry-run=lookup
+```
+
 ## 시크릿 작성
 
 ```sh
