@@ -89,9 +89,10 @@ grafana:
   persistence:
     enabled: true
     size: 2Gi
+  # Grafana 13은 384Mi에서 페이지 캐시가 눌려 디스크 재읽기 쓰래싱이 발생(2026-11-10 장애). 1Gi로 상향.
   resources:
-    requests: { cpu: 50m, memory: 192Mi }
-    limits: { memory: 384Mi }
+    requests: { cpu: 50m, memory: 384Mi }
+    limits: { memory: 1Gi }
   additionalDataSources:
     - name: Loki
       type: loki
