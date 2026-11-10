@@ -20,11 +20,14 @@ configs:
       clientID: argocd
       clientSecret: $argocd-oidc:clientSecret
       requestedScopes: ["openid", "profile", "email"]
+    # Homepage 대시보드 위젯용 로컬 계정. UI 로그인 불가, API 토큰만. 토큰은 kubernetes/apps/homepage/homepage-secrets.sops.yaml
+    accounts.homepage: apiKey
   # Authentik 그룹 → Argo CD 역할. admins 만 관리자, 나머지 로그인 사용자는 읽기 전용.
   rbac:
     policy.default: role:readonly
     policy.csv: |
       g, admins, role:admin
+      g, homepage, role:readonly
     scopes: "[groups, email]"
 
 # ---------------------------------------------------------------- Ingress (Phase 3)

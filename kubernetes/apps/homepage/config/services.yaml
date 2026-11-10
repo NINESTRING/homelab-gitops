@@ -6,6 +6,10 @@
         icon: argo-cd
         description: GitOps
         siteMonitor: http://argocd-server.argocd.svc.cluster.local/healthz
+        widget:
+          type: argocd
+          url: http://argocd-server.argocd.svc.cluster.local
+          key: "{{HOMEPAGE_VAR_ARGOCD_TOKEN}}"   # 읽기 전용 로컬 계정 homepage 의 API 토큰 (argocd-values.yaml accounts.homepage)
     - Authentik:
         href: https://auth.thatsmycodename.com
         icon: authentik
