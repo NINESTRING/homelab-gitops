@@ -22,6 +22,9 @@ configs:
       requestedScopes: ["openid", "profile", "email"]
     # Homepage 대시보드 위젯용 로컬 계정. UI 로그인 불가, API 토큰만. 토큰은 kubernetes/apps/homepage/homepage-secrets.sops.yaml
     accounts.homepage: apiKey
+    # 로컬 admin 비활성화 (2026-11-10). 로그인은 Authentik 만. SSO 가 고장나 잠기면 이 값을 "true" 로 바꿔 apply 하면
+    # argocd-initial-admin-secret 의 비밀번호로 다시 들어갈 수 있다.
+    admin.enabled: "false"
   # Authentik 그룹 → Argo CD 역할. admins 만 관리자, 나머지 로그인 사용자는 읽기 전용.
   rbac:
     policy.default: role:readonly

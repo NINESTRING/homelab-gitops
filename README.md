@@ -87,10 +87,10 @@ terraform init && terraform plan && terraform apply
 - Tailscale API 키: 관리 콘솔 > Settings > Keys > API access tokens. 테일넷 이름은 `tailscale status --json` 의 `CurrentTailnet.Name`
 - age 개인 키(`~/.config/sops/age/keys.txt`)는 Terraform 이 `kubectl` 로 주입한다(`terraform_data` + local-exec). state 에는 파일 해시만 남는다. 키 파일을 바꾸면 다음 apply 때 자동 재적용.
 
-Argo CD 첫 접속 (Phase 3 에서 Ingress 가 생기기 전까지):
+Argo CD 로그인은 Authentik(SSO)만 허용한다 (`admin.enabled: "false"`). SSO 장애로 잠기면 `argocd-values.yaml` 의
+`admin.enabled` 를 `"true"` 로 바꿔 apply 한 뒤 초기 비밀번호로 들어간다:
 
 ```sh
-kubectl -n argocd port-forward svc/argocd-server 8080:80
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
 ```
 

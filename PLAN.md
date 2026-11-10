@@ -157,5 +157,5 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 ## 6. 바로 다음 할 일
 
 1. ~~백업 보관물 점검~~ 첫 일일 백업 2026-11-10 03:00 Completed(304 항목) 확인
-2. (정리) Argo CD 로컬 admin 로그인 비활성화 검토 (`configs.params.admin.enabled: false`) — SSO 가 안정되면
+2. ~~Argo CD 로컬 admin 비활성화~~ 2026-11-10 적용 (`admin.enabled: "false"`, 복구 절차는 README)
 3. Phase 6 계속: Vaultwarden. 공개가 필요한 앱이 생기면 Cloudflare Tunnel
