@@ -139,7 +139,7 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 
 ### Phase 7. 자동화와 운영 (지속)
 - [ ] Renovate로 Helm 차트/이미지/Terraform provider 버전 PR — `renovate.json` 작성, 로컬 드라이런으로 전 항목 인식 확인(2026-11-10). GitHub 앱 설치와 첫 PR 확인 남음
-- [ ] kubeconform, yamllint, trivy(이미지 스캔) CI — 워크플로 `kubernetes`, `image-scan` 과 `scripts/` 작성, 로컬에서 전 단계 통과와 음성 테스트 확인(2026-11-10). arm64 이미지 검사 추가. `kubernetes` 워크플로 GitHub 첫 실행 성공(2026-11-10). `image-scan` 은 다음 월요일 자동 실행 또는 Actions 탭에서 수동 실행으로 확인
+- [x] kubeconform, yamllint, trivy(이미지 스캔) CI (2026-11-10~11. 워크플로 `kubernetes`, `image-scan` 과 `scripts/`. arm64 이미지 검사 포함. 두 워크플로 모두 GitHub 에서 실행 성공 확인)
 - [x] 런북: 재부팅, VM 재생성, 완전 재구축(DR), 잠김 복구, 장애 진단, 만료 일정 → `docs/runbook.md` (2026-11-10. 재구축 절차는 리허설 전이라 미검증 표시)
 - [ ] 재구축 리허설: VM을 날리고 Phase 1~2 절차로 복구되는지 확인
 - 완료 기준: 레포 + age 키 + 백업만으로 처음부터 재구축 가능
