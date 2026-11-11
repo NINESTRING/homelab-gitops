@@ -43,3 +43,17 @@ resource "cloudflare_zero_trust_tunnel_cloudflared" "homelab" {
   config_src    = "local"
   tunnel_secret = random_bytes.tunnel_secret.base64
 }
+
+# 루트 도메인(개인 사이트)을 터널로 보낸다. 프록시를 켜야 Cloudflare 엣지가 요청을 받아 터널로 넘긴다.
+# 서브도메인과 달리 여기서 관리하는 이유: external-dns 는 소유 표시 TXT 를 `externaldns-cname-<이름>` 으로 만드는데,
+# 루트에서는 그 이름이 존 밖(`externaldns-cname-thatsmycodename.com`)이라 만들지 못하고, 소유하지 않은 레코드는
+# 갱신도 삭제도 하지 않는다. 그래서 apps/site 의 Ingress 는 external-dns 가 무시하도록 표시해 두었다.
+resource "cloudflare_dns_record" "apex" {
+  zone_id = local.zone_id
+  name    = var.domain
+  type    = "CNAME"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.homelab.id}.cfargotunnel.com"
+  ttl     = 1 # 프록시 레코드는 자동(1)만 가능
+  proxied = true
+  comment = "개인 사이트 → Cloudflare Tunnel. Terraform 00-foundation 관리"
+}

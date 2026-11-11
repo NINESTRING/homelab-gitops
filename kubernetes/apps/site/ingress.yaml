@@ -1,15 +1,15 @@
-# 인터넷에 공개하는 사이트. DNS 가 Cloudflare Tunnel 을 가리키므로(프록시 켬) 실제 트래픽은
+# 인터넷에 공개하는 사이트. 루트 도메인의 DNS 는 Cloudflare Tunnel 을 가리키므로(프록시 켬) 실제 트래픽은
 # Cloudflare 엣지 → cloudflared → site Service 로 흐르고 Traefik 을 거치지 않는다
 # (라우팅 규칙: kubernetes/infrastructure/cloudflared/config.yaml).
-# 이 Ingress 는 external-dns 의 DNS 레코드와 Homepage 타일의 근거로 남긴다.
-# Tailscale 전용으로 되돌리려면 target 을 macmini.thatsmycodename.com 으로 바꾸고 cloudflare-proxied 줄을 지운다.
+# DNS 레코드는 external-dns 가 아니라 Terraform 이 관리한다 (terraform/00-foundation/cloudflare.tf 의 apex):
+# external-dns 는 루트 도메인에 소유 표시 TXT 를 만들 수 없어 레코드를 갱신하지 못한다. 그래서 controller 어노테이션으로
+# 이 Ingress 를 external-dns 대상에서 뺀다. Ingress 자체는 Homepage 타일의 근거로 남긴다.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: site
   annotations:
-    external-dns.kubernetes.io/target: a6b8c799-8ef4-412d-b552-bab744da3469.cfargotunnel.com
-    external-dns.kubernetes.io/cloudflare-proxied: "true"
+    external-dns.kubernetes.io/controller: terraform   # dns-controller 가 아닌 값이면 external-dns 가 무시
     gethomepage.dev/enabled: "true"
     gethomepage.dev/name: 개인 사이트
     gethomepage.dev/group: 앱

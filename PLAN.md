@@ -134,7 +134,7 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 - [x] 첫 앱 Homepage: `kubernetes/apps/homepage`, `https://home.thatsmycodename.com`, forward auth, Ingress 어노테이션 자동 탐색 (2026-11-09)
 - [x] Homepage Argo CD 위젯 (2026-11-10. 로컬 계정 `homepage`(apiKey, role:readonly), 토큰은 `homepage-secrets.sops.yaml`. 위젯 프록시에서 apps 12/synced 12/healthy 12 확인)
 - [ ] 다음 앱: Vaultwarden (PVC + 백업 검증)
-- [ ] 공개가 필요한 앱만 Cloudflare Tunnel로 노출, 나머지는 Tailscale 전용
+- [x] 공개가 필요한 앱만 Cloudflare Tunnel로 노출, 나머지는 Tailscale 전용 (2026-11-11. 터널 `homelab`, `infrastructure/cloudflared`. 첫 공개 앱: 개인 사이트 `thatsmycodename.com`, 엣지 경유 200 확인. 루트 도메인 DNS 는 Terraform 관리)
 - 완료 기준: 새 앱 추가가 PR 하나로 끝남
 
 ### Phase 7. 자동화와 운영 (지속)

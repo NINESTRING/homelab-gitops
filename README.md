@@ -82,7 +82,7 @@ cd ../10-cluster-bootstrap                   # kubeconfig 가 레포 루트에 �
 terraform init && terraform plan && terraform apply
 ```
 
-- `00-foundation`: Cloudflare 존 조회, `macmini.<domain>` A 레코드(Tailscale IP), Velero 용 R2 버킷 `velero`, Tailscale 정책 파일, Cloudflare Tunnel `homelab`(터널만. 라우팅은 `kubernetes/infrastructure/cloudflared`)
+- `00-foundation`: Cloudflare 존 조회, `macmini.<domain>` A 레코드(Tailscale IP), Velero 용 R2 버킷 `velero`, Tailscale 정책 파일, Cloudflare Tunnel `homelab`(터널만. 라우팅은 `kubernetes/infrastructure/cloudflared`), 루트 도메인 → 터널 CNAME(프록시)
 - `10-cluster-bootstrap`: `argocd` 네임스페이스, age 개인 키 Secret `sops-age`, Argo CD(Helm, KSOPS 포함), root Application → `kubernetes/bootstrap`
 - Cloudflare API 토큰 권한: Zone → Zone:Read, DNS:Edit (존 `thatsmycodename.com`), Account → Workers R2 Storage:Edit, Cloudflare Tunnel:Edit
 - Tailscale API 키: 관리 콘솔 > Settings > Keys > API access tokens. 테일넷 이름은 `tailscale status --json` 의 `CurrentTailnet.Name`
@@ -178,9 +178,11 @@ PR 하나에 아래를 담으면 끝난다.
 4. 시크릿: `<name>-secrets.sops.yaml` + `secret-generator.yaml`(ksops). `homepage/` 의 것을 복사
 5. 상태가 있으면(PVC) Velero 백업 대상인지 확인 (`platform/velero/values.yaml` 의 `excludedNamespaces`)
 6. 외부 공개가 필요한 앱만 Cloudflare Tunnel 로 내보낸다. 나머지는 Tailscale 안에서만 열린다. 공개하려면
-   `infrastructure/cloudflared/config.yaml` 의 ingress 에 `hostname` → Service 규칙을 추가하고, 앱 Ingress 의
-   `external-dns.kubernetes.io/target` 을 `<tunnel_id>.cfargotunnel.com` 으로 바꾸고
-   `external-dns.kubernetes.io/cloudflare-proxied: "true"` 를 단다 (`apps/site/ingress.yaml` 참고).
+   `infrastructure/cloudflared/config.yaml` 의 ingress 에 `hostname` → Service 규칙을 추가하고, 그 호스트의 DNS 를
+   `<tunnel_id>.cfargotunnel.com` (프록시 켬) 으로 돌린다. 루트 도메인은 external-dns 가 소유 표시 TXT 를 만들 수 없어
+   Terraform 이 관리한다 (`00-foundation/cloudflare.tf` 의 `apex`, Ingress 에는 `external-dns.kubernetes.io/controller: terraform`).
+   서브도메인은 앱 Ingress 의 `external-dns.kubernetes.io/target` 을 터널 주소로 바꾸고
+   `external-dns.kubernetes.io/cloudflare-proxied: "true"` 를 다는 방식이 될 텐데, 아직 써 보지 않았다.
    forward auth 미들웨어는 Traefik 에 있으므로 터널로 직접 내보내는 앱에는 걸리지 않는다
 
 Homepage 설정 변경: `kubernetes/apps/homepage/config/*.yaml` 수정 후 커밋. configMapGenerator 해시가 바뀌어 Pod 가 자동 재시작된다.
