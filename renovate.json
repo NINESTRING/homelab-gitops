@@ -59,6 +59,13 @@
       "prBodyNotes": ["클러스터는 arm64 입니다. 새 태그에 `linux/arm64` 이미지가 있는지 확인하세요: `docker buildx imagetools inspect <image>:<tag>`"]
     },
     {
+      "description": "개인 사이트 이미지(YYYY.MM.DD.N). 글을 올리면 바로 배포되도록 대기/요일 제한 없이 따로 PR 을 만든다. 머지는 직접 한다",
+      "matchPackageNames": ["ghcr.io/ninestring/thatsmycodename.com"],
+      "groupName": "site",
+      "schedule": ["at any time"],
+      "minimumReleaseAge": null
+    },
+    {
       "matchUpdateTypes": ["major"],
       "prBodyNotes": ["메이저 업데이트입니다. 릴리스 노트의 마이그레이션 절차를 읽고, 머지 전 백업이 최근인지 확인하세요 (`kubectl -n velero get backup`)."]
     }

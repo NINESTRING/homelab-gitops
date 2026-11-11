@@ -1,0 +1,28 @@
+# TLS 블록 없음: Traefik 기본 인증서(와일드카드, 루트 도메인 포함)로 TLS 를 종료한다.
+# 공개 사이트라 forward auth 미들웨어를 붙이지 않는다. 지금은 Tailscale 안에서만 열리고,
+# 외부 공개는 Cloudflare Tunnel 을 붙일 때 DNS 대상만 바꾼다.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: site
+  annotations:
+    external-dns.kubernetes.io/target: macmini.thatsmycodename.com
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: 개인 사이트
+    gethomepage.dev/group: 앱
+    gethomepage.dev/icon: mdi-web
+    gethomepage.dev/description: 블로그, 이력서, 포트폴리오
+    gethomepage.dev/pod-selector: app=site
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: thatsmycodename.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: site
+                port:
+                  number: 80

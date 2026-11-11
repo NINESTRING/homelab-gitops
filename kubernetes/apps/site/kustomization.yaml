@@ -1,0 +1,10 @@
+# 개인 사이트(블로그/이력서/포트폴리오). 소스와 이미지 빌드는 github.com/NINESTRING/thatsmycodename.com.
+# 정적 파일 + nginx 라 상태도 시크릿도 없다.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: site
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
