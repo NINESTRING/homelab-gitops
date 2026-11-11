@@ -88,8 +88,9 @@ limactl start k3s
 
 ## 4. 재구축
 
-> 4.1 과 4.2 는 2026-11-10 현재 **통째로 실행해 본 적이 없다.** 부분 검증은 됨: 빈 클러스터에 Terraform 으로
-> Argo CD 올리기(Phase 2), Velero 백업을 다른 네임스페이스로 복원(Phase 5). 재구축 리허설(Phase 7) 후 이 문단을 지운다.
+> 4.1 과 4.3 은 2026-11-11 리허설에서 이 문서 그대로 실행해 검증했다. VM 삭제부터 전 서비스 복구까지 **약 8분**
+> (VM 재생성 21초, Argo CD 설치 40초, 앱 12개 배포 3분 20초, Authentik 복원 2분 20초).
+> 4.2(Mac mini 교체)는 실행해 본 적이 없다. 4.1 과 다른 부분은 1~5 단계뿐이다.
 
 ### 4.1 VM 재생성 (Mac mini 는 멀쩡, 클러스터를 새로)
 
@@ -113,9 +114,11 @@ kubectl -n velero get backup -w      # Completed 까지
 
 **② VM 을 지우고 다시 만든다.**
 
+`--vm-only` 는 호스트 설정을 건너뛰므로 sudo 비밀번호가 필요 없다. 이미지가 캐시돼 있으면 30초 안에 끝난다.
+
 ```sh
-ssh -t ninestring-macmini 'PATH=/opt/homebrew/bin:$PATH; limactl stop -f k3s; limactl delete k3s; \
-  cd ~/code/personal/homelab-gitops && git pull && ./bootstrap/bootstrap.sh'
+ssh ninestring-macmini 'PATH=/opt/homebrew/bin:$PATH; limactl stop -f k3s; limactl delete k3s; \
+  cd ~/code/personal/homelab-gitops && git pull && ./bootstrap/bootstrap.sh --vm-only'
 ```
 
 **③ 새 kubeconfig 를 가져온다.** 클러스터 CA 가 바뀌어 예전 파일은 못 쓴다.
@@ -148,11 +151,14 @@ watch kubectl -n argocd get applications
 
 **⑦ 뒷정리.**
 
-- Homepage 의 Argo CD 위젯 토큰은 옛 Argo CD 가 발급한 것이라 무효다. Argo CD 에 SSO 로 로그인 →
-  Settings → Accounts → `homepage` → Generate New 로 새 토큰을 받아 넣고 커밋한다.
+- Homepage 의 Argo CD 위젯 토큰은 옛 Argo CD 가 발급한 것이라 무효다(401). 새로 발급해 넣고 커밋·푸시한다.
+  `--core` 는 로그인 없이 kubeconfig 로 직접 동작하며 현재 네임스페이스가 `argocd` 여야 한다 (`brew install argocd`).
   ```sh
-  sops set kubernetes/apps/homepage/homepage-secrets.sops.yaml '["stringData"]["HOMEPAGE_VAR_ARGOCD_TOKEN"]' '"<새 토큰>"'
+  cp kubeconfig /tmp/kc && KUBECONFIG=/tmp/kc kubectl config set-context --current --namespace=argocd
+  TOKEN=$(KUBECONFIG=/tmp/kc argocd account generate-token --account homepage --core); rm /tmp/kc
+  sops set kubernetes/apps/homepage/homepage-secrets.sops.yaml '["stringData"]["HOMEPAGE_VAR_ARGOCD_TOKEN"]' "\"$TOKEN\""
   ```
+- Prometheus 메트릭과 Loki 로그 이력은 백업하지 않으므로 재구축 시점부터 다시 쌓인다. Grafana 는 4.3 을 하지 않으면 기본 대시보드만 남는다.
 - `cd terraform/20-authentik && terraform plan` 이 No changes 인지 확인. Authentik 을 백업에서 복원했다면 그대로 맞는다.
 - 2장 점검, 브라우저에서 Homepage 와 Argo CD 로그인.
 
@@ -304,7 +310,7 @@ kubectl -n argocd annotate application <app> argocd.argoproj.io/refresh=normal -
 - **Telegram 이 조용함**: 정상이면 조용하다. 경로 확인은 테스트 알림으로 한다.
   ```sh
   kubectl -n monitoring exec alertmanager-kps-kube-prometheus-stack-alertmanager-0 -c alertmanager -- \
-    amtool alert add RunbookTest severity=warning --annotation=summary="테스트" --alertmanager.url=http://localhost:9093
+    amtool alert add RunbookTest severity=warning --annotation=summary=test --alertmanager.url=http://localhost:9093
   ```
   30초쯤 뒤 Telegram 에 오고 5분 뒤 해제 메시지가 온다.
 - **`VeleroBackupFailed` / `VeleroBackupStale`**: `kubectl -n velero get backup`, 실패한 백업은

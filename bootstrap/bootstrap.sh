@@ -8,6 +8,7 @@
 #
 # 실행:
 #   cd ~/code/personal/homelab-gitops && ./bootstrap/bootstrap.sh
+#   ./bootstrap/bootstrap.sh --vm-only   # 호스트 설정(sudo 필요)은 건너뛰고 VM 생성/시작과 kubeconfig 만. VM 재생성용 (docs/runbook.md 4.1)
 #
 # 결과:
 #   - 절전/자동 업데이트 해제, SSH 활성화
@@ -24,6 +25,13 @@ BOOTSTRAP_DIR="$REPO_DIR/bootstrap"
 VM_NAME="k3s"
 LAUNCH_AGENT_LABEL="com.homelab.lima-k3s"
 
+VM_ONLY=0
+case "${1:-}" in
+  --vm-only) VM_ONLY=1 ;;
+  "") ;;
+  *) echo "usage: $0 [--vm-only]" >&2; exit 2 ;;
+esac
+
 log()  { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 warn() { printf '\033[1;33m!! %s\033[0m\n' "$*" >&2; }
 die()  { printf '\033[1;31mxx %s\033[0m\n' "$*" >&2; exit 1; }
@@ -32,6 +40,8 @@ die()  { printf '\033[1;31mxx %s\033[0m\n' "$*" >&2; exit 1; }
 [[ "$(uname -s)" == "Darwin" ]] || die "macOS 에서만 실행 가능"
 [[ "$(uname -m)" == "arm64"  ]] || die "Apple Silicon 전용"
 [[ $EUID -ne 0 ]] || die "root 로 실행하지 마세요. 필요한 곳에서 sudo 를 요청합니다"
+
+if [[ $VM_ONLY == 0 ]]; then
 
 log "sudo 권한 확인"
 sudo -v
@@ -79,6 +89,11 @@ fi
 log "Brewfile 적용"
 brew bundle --file="$BOOTSTRAP_DIR/Brewfile" --no-upgrade
 
+else
+  log "--vm-only: 호스트 설정(전원, 업데이트, SSH, Homebrew)은 건너뜀"
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
 # ---------------------------------------------------------------- 5. Tailscale
 TS_CLI="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 [[ -x "$TS_CLI" ]] || die "Tailscale 앱이 없습니다. 설치 후 로그인하고 다시 실행하세요"
@@ -122,6 +137,8 @@ chmod 600 "$REPO_DIR/kubeconfig"
 export KUBECONFIG="$REPO_DIR/kubeconfig"
 kubectl get nodes
 
+if [[ $VM_ONLY == 0 ]]; then
+
 # ---------------------------------------------------------------- 7.5 호스트 node_exporter
 # 루프백에만 바인딩: LAN/Tailscale 에 노출하지 않는다. VM 은 Lima 게이트웨이(192.168.5.2)로 호스트 localhost 에 닿는다.
 log "node_exporter 서비스 시작 (호스트 메트릭, 127.0.0.1:9100)"
@@ -135,6 +152,8 @@ mkdir -p "$HOME/Library/LaunchAgents" "$HOME/Library/Logs"
 sed "s#__HOME__#$HOME#g" "$BOOTSTRAP_DIR/launchd/$LAUNCH_AGENT_LABEL.plist" > "$PLIST_DST"
 launchctl bootout "gui/$(id -u)/$LAUNCH_AGENT_LABEL" 2>/dev/null || true
 launchctl bootstrap "gui/$(id -u)" "$PLIST_DST"
+
+fi
 
 # ---------------------------------------------------------------- 끝
 cat <<MSG

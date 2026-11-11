@@ -138,11 +138,11 @@ Argo CD가 관리하는 첫 번째 묶음. 순서대로 sync wave 지정.
 - 완료 기준: 새 앱 추가가 PR 하나로 끝남
 
 ### Phase 7. 자동화와 운영 (지속)
-- [ ] Renovate로 Helm 차트/이미지/Terraform provider 버전 PR — `renovate.json` 작성, 로컬 드라이런으로 전 항목 인식 확인(2026-11-10). GitHub 앱 설치와 첫 PR 확인 남음
+- [x] Renovate로 Helm 차트/이미지/Terraform provider 버전 PR (2026-11-10 `renovate.json`, GitHub 앱 설치, Dependency Dashboard 이슈 #1. 첫 PR 은 토요일 오전)
 - [x] kubeconform, yamllint, trivy(이미지 스캔) CI (2026-11-10~11. 워크플로 `kubernetes`, `image-scan` 과 `scripts/`. arm64 이미지 검사 포함. 두 워크플로 모두 GitHub 에서 실행 성공 확인)
 - [x] 런북: 재부팅, VM 재생성, 완전 재구축(DR), 잠김 복구, 장애 진단, 만료 일정 → `docs/runbook.md` (2026-11-10. 재구축 절차는 리허설 전이라 미검증 표시)
-- [ ] 재구축 리허설: VM을 날리고 Phase 1~2 절차로 복구되는지 확인
-- 완료 기준: 레포 + age 키 + 백업만으로 처음부터 재구축 가능
+- [x] 재구축 리허설 (2026-11-11. VM 삭제 → `bootstrap.sh --vm-only` → Terraform → Argo CD 앱 12개 → Velero 로 Authentik 복원. 약 8분, 데이터 일치 확인. 런북 4.1/4.3 검증, `--vm-only` 와 `argocd --core` 토큰 발급을 런북에 반영)
+- 완료 기준: 레포 + age 키 + 백업만으로 처음부터 재구축 가능 — **충족 (2026-11-11 리허설. Mac mini 자체 교체는 미실행)**
 
 ## 5. 주의할 점 / 리스크
 
