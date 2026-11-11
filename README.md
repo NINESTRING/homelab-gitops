@@ -161,7 +161,7 @@ velero restore create --from-backup <name> --include-namespaces whoami
 |---|---|
 | `kubernetes/apps/homepage` | Homepage 대시보드 `https://home.thatsmycodename.com` (forward auth). 플랫폼 서비스는 `config/services.yaml` 에 고정, 앱은 Ingress 어노테이션으로 자동 등록. 시크릿: `homepage-secrets.sops.yaml`(Grafana 위젯용 로컬 admin) |
 | `terraform/20-authentik/homepage.tf` | Homepage proxy 프로바이더/앱 → 내장 Outpost |
-| `kubernetes/apps/site` | 개인 사이트 `https://thatsmycodename.com` (로그인 없음, 아직 Tailscale 전용). 소스와 이미지 빌드는 [thatsmycodename.com](https://github.com/NINESTRING/thatsmycodename.com) 레포. 새 이미지 태그는 Renovate 가 대기 없이 `site` PR 로 올리고, 머지하면 Argo CD 가 배포 |
+| `kubernetes/apps/site` | 개인 사이트 `https://thatsmycodename.com` (로그인 없음, 아직 Tailscale 전용). 소스와 이미지 빌드는 [thatsmycodename.com](https://github.com/NINESTRING/thatsmycodename.com) 레포. 새 이미지 태그는 Renovate 가 대기 없이 `site` PR 로 올리고 CI 통과 시 자동 머지 → Argo CD 배포 |
 
 ### 앱 추가 템플릿
 
