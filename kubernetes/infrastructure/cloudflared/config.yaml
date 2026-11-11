@@ -1,0 +1,13 @@
+# cloudflared 설정. 여기 적힌 호스트만 인터넷에 공개된다.
+# 공개 앱 추가: (1) 아래 ingress 에 hostname → Service 규칙 추가,
+#              (2) 그 앱 Ingress 의 external-dns target 을 <tunnel>.cfargotunnel.com 으로, cloudflare-proxied 를 "true" 로.
+# Service 로 직접 보낸다 (Traefik 을 거치지 않음): Host 헤더로 내부 전용 앱에 닿을 길을 만들지 않기 위해서다.
+tunnel: a6b8c799-8ef4-412d-b552-bab744da3469
+credentials-file: /etc/cloudflared/creds/credentials.json
+metrics: 0.0.0.0:2000
+no-autoupdate: true
+ingress:
+  - hostname: thatsmycodename.com
+    service: http://site.site.svc.cluster.local:80
+  # 규칙에 없는 호스트는 전부 404
+  - service: http_status:404

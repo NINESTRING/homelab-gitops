@@ -1,0 +1,15 @@
+# Cloudflare Tunnel 커넥터. 공개가 필요한 앱만 config.yaml 의 ingress 규칙으로 내보낸다 (나머지는 Tailscale 전용).
+# 터널 자체는 terraform/00-foundation 이 만들고, 자격 증명은 tunnel-credentials.sops.yaml (terraform output tunnel_credentials).
+# config.yaml 이 바뀌면 ConfigMap 이름(해시)이 바뀌어 Pod 가 자동 재배포된다.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: cloudflared
+resources:
+  - namespace.yaml
+  - deployment.yaml
+generators:
+  - secret-generator.yaml
+configMapGenerator:
+  - name: cloudflared-config
+    files:
+      - config.yaml

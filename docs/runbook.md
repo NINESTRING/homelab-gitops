@@ -25,7 +25,7 @@
 | Velero 백업 | R2 버킷 `velero` (30일 보관) | 앱 데이터 유실. 설정은 레포에서 재생성됨 |
 | Terraform state | R2 버킷 `tfstate` | `terraform import` 로 재구성하거나 자원을 지우고 다시 apply |
 
-kopia 저장소 비밀번호, R2 `velero` 키, Authentik 부트스트랩 토큰, Telegram 봇 토큰은 레포의 SOPS 파일 안에 있다.
+kopia 저장소 비밀번호, R2 `velero` 키, Authentik 부트스트랩 토큰, Telegram 봇 토큰, Cloudflare Tunnel 자격 증명은 레포의 SOPS 파일 안에 있다.
 age 키만 있으면 풀린다.
 
 ## 2. 상태 점검

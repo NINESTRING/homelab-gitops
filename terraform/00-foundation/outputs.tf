@@ -12,3 +12,18 @@ output "velero_bucket" {
   description = "Velero 백업 R2 버킷"
   value       = cloudflare_r2_bucket.velero.name
 }
+
+output "tunnel_id" {
+  description = "Cloudflare Tunnel ID. 공개 앱 Ingress 의 external-dns target 은 <tunnel_id>.cfargotunnel.com"
+  value       = cloudflare_zero_trust_tunnel_cloudflared.homelab.id
+}
+
+output "tunnel_credentials" {
+  description = "cloudflared credentials.json 내용. kubernetes/infrastructure/cloudflared/tunnel-credentials.sops.yaml 에 넣는다"
+  sensitive   = true
+  value = jsonencode({
+    AccountTag   = var.cloudflare_account_id
+    TunnelID     = cloudflare_zero_trust_tunnel_cloudflared.homelab.id
+    TunnelSecret = random_bytes.tunnel_secret.base64
+  })
+}

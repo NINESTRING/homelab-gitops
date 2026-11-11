@@ -28,3 +28,18 @@ resource "cloudflare_r2_bucket" "velero" {
   location      = "apac"
   storage_class = "Standard"
 }
+
+# ---------------------------------------------------------------- Tunnel (공개 서비스)
+# 공개가 필요한 앱만 이 터널로 나간다. 여기서는 터널 자체만 만들고(config_src = local),
+# 어떤 호스트를 어느 Service 로 보낼지는 kubernetes/infrastructure/cloudflared/config.yaml 이 정한다.
+# DNS 레코드는 external-dns 가 Ingress 의 target 어노테이션(<tunnel_id>.cfargotunnel.com)을 보고 만든다.
+resource "random_bytes" "tunnel_secret" {
+  length = 32
+}
+
+resource "cloudflare_zero_trust_tunnel_cloudflared" "homelab" {
+  account_id    = var.cloudflare_account_id
+  name          = "homelab"
+  config_src    = "local"
+  tunnel_secret = random_bytes.tunnel_secret.base64
+}

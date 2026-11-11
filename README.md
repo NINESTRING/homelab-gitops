@@ -82,9 +82,9 @@ cd ../10-cluster-bootstrap                   # kubeconfig 가 레포 루트에 �
 terraform init && terraform plan && terraform apply
 ```
 
-- `00-foundation`: Cloudflare 존 조회, `macmini.<domain>` A 레코드(Tailscale IP), Velero 용 R2 버킷 `velero`, Tailscale 정책 파일
+- `00-foundation`: Cloudflare 존 조회, `macmini.<domain>` A 레코드(Tailscale IP), Velero 용 R2 버킷 `velero`, Tailscale 정책 파일, Cloudflare Tunnel `homelab`(터널만. 라우팅은 `kubernetes/infrastructure/cloudflared`)
 - `10-cluster-bootstrap`: `argocd` 네임스페이스, age 개인 키 Secret `sops-age`, Argo CD(Helm, KSOPS 포함), root Application → `kubernetes/bootstrap`
-- Cloudflare API 토큰 권한: Zone → Zone:Read, DNS:Edit (존 `thatsmycodename.com`), Account → Workers R2 Storage:Edit
+- Cloudflare API 토큰 권한: Zone → Zone:Read, DNS:Edit (존 `thatsmycodename.com`), Account → Workers R2 Storage:Edit, Cloudflare Tunnel:Edit
 - Tailscale API 키: 관리 콘솔 > Settings > Keys > API access tokens. 테일넷 이름은 `tailscale status --json` 의 `CurrentTailnet.Name`
 - age 개인 키(`~/.config/sops/age/keys.txt`)는 Terraform 이 `kubectl` 로 주입한다(`terraform_data` + local-exec). state 에는 파일 해시만 남는다. 키 파일을 바꾸면 다음 apply 때 자동 재적용.
 
@@ -106,6 +106,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.pas
 | `infrastructure/external-dns` | Ingress 호스트명을 Cloudflare 에 CNAME 으로 자동 등록. Ingress 에 `external-dns.kubernetes.io/target: macmini.thatsmycodename.com` 어노테이션 필요 |
 | `infrastructure/traefik` | k3s 내장 Traefik 의 HelmChartConfig: 기본 TLS 인증서 = 와일드카드, HTTP→HTTPS 리다이렉트 |
 | `infrastructure/reloader` | Secret/ConfigMap 변경 시 Deployment 자동 재시작 |
+| `infrastructure/cloudflared` | Cloudflare Tunnel 커넥터(2개). `config.yaml` 의 ingress 규칙에 적힌 호스트만 인터넷에 공개하고 해당 Service 로 직접 보낸다(Traefik 을 거치지 않음). 자격 증명: `tunnel-credentials.sops.yaml` (`terraform -chdir=terraform/00-foundation output -raw tunnel_credentials`) |
 | `apps/whoami` | 배관 검증용 테스트 앱 `https://whoami.thatsmycodename.com` |
 
 새 앱 추가: `kubernetes/apps/<name>/kustomization.yaml` 과 매니페스트를 커밋한다. Ingress 는 TLS 블록 없이 두고
@@ -161,7 +162,7 @@ velero restore create --from-backup <name> --include-namespaces whoami
 |---|---|
 | `kubernetes/apps/homepage` | Homepage 대시보드 `https://home.thatsmycodename.com` (forward auth). 플랫폼 서비스는 `config/services.yaml` 에 고정, 앱은 Ingress 어노테이션으로 자동 등록. 시크릿: `homepage-secrets.sops.yaml`(Grafana 위젯용 로컬 admin) |
 | `terraform/20-authentik/homepage.tf` | Homepage proxy 프로바이더/앱 → 내장 Outpost |
-| `kubernetes/apps/site` | 개인 사이트 `https://thatsmycodename.com` (로그인 없음, 아직 Tailscale 전용). 소스와 이미지 빌드는 [thatsmycodename.com](https://github.com/NINESTRING/thatsmycodename.com) 레포. 새 이미지 태그는 Renovate 가 대기 없이 `site` PR 로 올리고 CI 통과 시 자동 머지 → Argo CD 배포 |
+| `kubernetes/apps/site` | 개인 사이트 `https://thatsmycodename.com` (로그인 없음, Cloudflare Tunnel 로 인터넷에 공개). 소스와 이미지 빌드는 [thatsmycodename.com](https://github.com/NINESTRING/thatsmycodename.com) 레포. 새 이미지 태그는 Renovate 가 대기 없이 `site` PR 로 올리고 CI 통과 시 자동 머지 → Argo CD 배포 |
 
 ### 앱 추가 템플릿
 
@@ -176,7 +177,11 @@ PR 하나에 아래를 담으면 끝난다.
    `pod-selector` 어노테이션 (`apps/whoami/ingress.yaml` 참고). 위젯이 필요하면 `gethomepage.dev/widget.type`, `widget.url`
 4. 시크릿: `<name>-secrets.sops.yaml` + `secret-generator.yaml`(ksops). `homepage/` 의 것을 복사
 5. 상태가 있으면(PVC) Velero 백업 대상인지 확인 (`platform/velero/values.yaml` 의 `excludedNamespaces`)
-6. 외부 공개가 필요한 앱만 Cloudflare Tunnel (아직 없음). 나머지는 Tailscale 안에서만 열린다
+6. 외부 공개가 필요한 앱만 Cloudflare Tunnel 로 내보낸다. 나머지는 Tailscale 안에서만 열린다. 공개하려면
+   `infrastructure/cloudflared/config.yaml` 의 ingress 에 `hostname` → Service 규칙을 추가하고, 앱 Ingress 의
+   `external-dns.kubernetes.io/target` 을 `<tunnel_id>.cfargotunnel.com` 으로 바꾸고
+   `external-dns.kubernetes.io/cloudflare-proxied: "true"` 를 단다 (`apps/site/ingress.yaml` 참고).
+   forward auth 미들웨어는 Traefik 에 있으므로 터널로 직접 내보내는 앱에는 걸리지 않는다
 
 Homepage 설정 변경: `kubernetes/apps/homepage/config/*.yaml` 수정 후 커밋. configMapGenerator 해시가 바뀌어 Pod 가 자동 재시작된다.
 
