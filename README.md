@@ -162,7 +162,7 @@ velero restore create --from-backup <name> --include-namespaces whoami
 |---|---|
 | `kubernetes/apps/homepage` | Homepage 대시보드 `https://home.thatsmycodename.com` (forward auth). 플랫폼 서비스는 `config/services.yaml` 에 고정, 앱은 Ingress 어노테이션으로 자동 등록. 시크릿: `homepage-secrets.sops.yaml`(Grafana 위젯용 로컬 admin) |
 | `terraform/20-authentik/homepage.tf` | Homepage proxy 프로바이더/앱 → 내장 Outpost |
-| `kubernetes/apps/site` | 개인 사이트 `https://thatsmycodename.com` (로그인 없음, Cloudflare Tunnel 로 인터넷에 공개). 소스와 이미지 빌드는 [thatsmycodename.com](https://github.com/NINESTRING/thatsmycodename.com) 레포. 새 이미지 태그는 Renovate 가 대기 없이 `site` PR 로 올리고 CI 통과 시 자동 머지 → Argo CD 배포 |
+| `kubernetes/apps/site` | 개인 사이트 `https://thatsmycodename.com` (로그인 없음, Cloudflare Tunnel 로 인터넷에 공개). 소스와 이미지 빌드는 [thatsmycodename.com](https://github.com/NINESTRING/thatsmycodename.com) 레포. 사이트 레포 main 에 푸시하면 그쪽 Image 워크플로가 이미지를 빌드한 뒤 이 레포의 `deployment.yaml` 태그를 올려 main 에 직접 푸시(`site: deploy <버전>`) → Argo CD 배포. 푸시 권한은 이 레포의 쓰기 deploy key `site-image-bump` (개인 키는 사이트 레포 시크릿 `GITOPS_DEPLOY_KEY`). Renovate 는 이 이미지를 건드리지 않는다 |
 
 ### 앱 추가 템플릿
 
@@ -196,7 +196,7 @@ Homepage 설정 변경: `kubernetes/apps/homepage/config/*.yaml` 수정 후 커�
 | `image-scan` | 매주 월요일 09:00 KST, main 푸시, 수동 | trivy 로 배포 이미지의 수정 가능한 HIGH/CRITICAL 집계. 실패시키지 않고 실행 Summary 에 표로 남김 |
 
 CI 는 SOPS 시크릿을 복호화하지 않는다. 그래서 Secret 내용의 오류는 못 잡고, Argo CD 동기화 때 드러난다.
-main 에 직접 푸시하면 CI 결과와 무관하게 Argo CD 가 적용한다. 검사를 거치게 하려면 PR 로 올린다 (Renovate PR 은 항상 거친다).
+main 에 직접 푸시하면 CI 결과와 무관하게 Argo CD 가 적용한다. 검사를 거치게 하려면 PR 로 올린다 (Renovate PR 은 항상 거친다). 사이트 이미지 태그 갱신은 예외로 main 에 직접 들어온다 (태그 한 줄만 바뀌고, 푸시 후 CI 가 돈다).
 
 푸시 전에 같은 검사를 로컬에서 (`brew install kustomize kubeconform yamllint skopeo trivy`):
 

@@ -59,12 +59,9 @@
       "prBodyNotes": ["클러스터는 arm64 입니다. 새 태그에 `linux/arm64` 이미지가 있는지 확인하세요: `docker buildx imagetools inspect <image>:<tag>`"]
     },
     {
-      "description": "개인 사이트 이미지(YYYY.MM.DD.N). 글을 올리면 바로 배포되도록 대기/요일 제한 없이 따로 PR 을 만들고, CI 가 통과하면 자동 머지한다",
+      "description": "개인 사이트 이미지(YYYY.MM.DD.N)는 Renovate 가 건드리지 않는다. 사이트 레포의 Image 워크플로가 빌드 직후 이 레포의 태그를 직접 올린다",
       "matchPackageNames": ["ghcr.io/ninestring/thatsmycodename.com"],
-      "groupName": "site",
-      "schedule": ["at any time"],
-      "minimumReleaseAge": null,
-      "automerge": true
+      "enabled": false
     },
     {
       "matchUpdateTypes": ["major"],
