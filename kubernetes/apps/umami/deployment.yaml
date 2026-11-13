@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: umami
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate   # 시작할 때 DB 마이그레이션을 돌리므로 두 버전이 겹치지 않게
+  selector:
+    matchLabels:
+      app: umami
+  template:
+    metadata:
+      labels:
+        app: umami
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001    # 이미지의 nextjs 사용자 (이름으로만 지정돼 있어 숫자를 적어야 runAsNonRoot 검사를 통과)
+        runAsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: umami
+          image: ghcr.io/umami-software/umami:3.4.1
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: umami-secrets, key: POSTGRES_PASSWORD } }
+            # $(POSTGRES_PASSWORD) 는 kubelet 이 위 변수로 치환한다. 비밀번호는 URL 에 그대로 들어가므로 hex 로만 만든다.
+            - name: DATABASE_URL
+              value: postgresql://umami:$(POSTGRES_PASSWORD)@postgres:5432/umami
+            - name: APP_SECRET
+              valueFrom: { secretKeyRef: { name: umami-secrets, key: APP_SECRET } }
+            - name: DISABLE_TELEMETRY
+              value: "1"
+            - name: DISABLE_UPDATES
+              value: "1"   # 새 버전은 Renovate 가 알린다
+          # 첫 기동은 DB 마이그레이션 때문에 느리다
+          startupProbe:
+            httpGet: { path: /api/heartbeat, port: http }
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /api/heartbeat, port: http }
+          livenessProbe:
+            httpGet: { path: /api/heartbeat, port: http }
+          resources:
+            requests: { cpu: 50m, memory: 256Mi }
+            limits: { memory: 768Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ALL] }

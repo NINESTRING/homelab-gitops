@@ -7,6 +7,11 @@ credentials-file: /etc/cloudflared/creds/credentials.json
 metrics: 0.0.0.0:2000
 no-autoupdate: true
 ingress:
+  # Umami 방문 수집: 추적 스크립트와 수집 API 두 경로만 사이트와 같은 호스트로 내보낸다 (대시보드는 Tailscale 전용).
+  # path 는 Go 정규식이고 부분 일치이므로 ^ $ 로 묶는다. 규칙은 위에서부터 처음 맞는 것이 쓰인다.
+  - hostname: thatsmycodename.com
+    path: ^/(script\.js|api/send)$
+    service: http://umami.umami.svc.cluster.local:80
   - hostname: thatsmycodename.com
     service: http://site.site.svc.cluster.local:80
   # 규칙에 없는 호스트는 전부 404

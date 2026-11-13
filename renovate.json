@@ -7,7 +7,7 @@
   "prConcurrentLimit": 5,
   "labels": ["renovate"],
   "kubernetes": {
-    "managerFilePatterns": ["/^kubernetes/.+/deployment\\.ya?ml$/"]
+    "managerFilePatterns": ["/^kubernetes/.+/(deployment|statefulset)\\.ya?ml$/"]
   },
   "customManagers": [
     {

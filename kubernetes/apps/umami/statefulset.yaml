@@ -1,0 +1,62 @@
+# Umami 전용 PostgreSQL. 데이터는 local-path PVC, Velero 일일 백업 대상(파일시스템 백업).
+# 메이저 버전을 올릴 때는 덤프/복원이 필요하다 (데이터 디렉터리가 /var/lib/postgresql/<major>/docker 로 버전마다 따로다).
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70    # alpine 이미지의 postgres 사용자
+        runAsGroup: 70
+        fsGroup: 70
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: postgres
+          image: postgres:18.7-alpine
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: umami
+            - name: POSTGRES_USER
+              value: umami
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: umami-secrets, key: POSTGRES_PASSWORD } }
+          readinessProbe:
+            exec:
+              command: [pg_isready, -U, umami, -d, umami]
+          livenessProbe:
+            exec:
+              command: [pg_isready, -U, umami, -d, umami]
+            initialDelaySeconds: 30
+          resources:
+            requests: { cpu: 20m, memory: 64Mi }
+            limits: { memory: 512Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            # 18 부터 이미지의 볼륨 경로는 /var/lib/postgresql (PGDATA 는 그 아래 18/docker)
+            - name: data
+              mountPath: /var/lib/postgresql
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 5Gi   # local-path-provisioner

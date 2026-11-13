@@ -1,0 +1,28 @@
+# 대시보드. Tailscale 안에서만 열린다 (TLS 블록 없음: Traefik 기본 인증서, external-dns 가 CNAME 생성).
+# forward auth 는 걸지 않는다: Umami 가 자체 로그인을 갖고 있어 이중 로그인이 된다.
+# 방문 수집 경로(/script.js, /api/send)는 이 Ingress 가 아니라 Cloudflare Tunnel 이 thatsmycodename.com 아래로 내보낸다.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: umami
+  annotations:
+    external-dns.kubernetes.io/target: macmini.thatsmycodename.com
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Umami
+    gethomepage.dev/group: 앱
+    gethomepage.dev/icon: umami.png
+    gethomepage.dev/description: 개인 사이트 방문 통계
+    gethomepage.dev/pod-selector: app=umami
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: umami.thatsmycodename.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: umami
+                port:
+                  name: http
