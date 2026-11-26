@@ -1,0 +1,13 @@
+# spending-mcp: 개인 카드 지출 관리 MCP 서버의 데이터베이스.
+# 지금은 전용 PostgreSQL 만 있다. 클러스터 안에서만 열리며(postgres.spending:5432),
+# 맥에서는 `kubectl -n spending port-forward svc/postgres 5433:5432` 로 붙는다.
+# 시크릿: spending-secrets.sops.yaml (POSTGRES_PASSWORD).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: spending
+resources:
+  - namespace.yaml
+  - statefulset.yaml
+  - service.yaml
+generators:
+  - secret-generator.yaml

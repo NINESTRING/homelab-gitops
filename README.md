@@ -164,6 +164,7 @@ velero restore create --from-backup <name> --include-namespaces whoami
 | `terraform/20-authentik/homepage.tf` | Homepage proxy 프로바이더/앱 → 내장 Outpost |
 | `kubernetes/apps/site` | 개인 사이트 `https://thatsmycodename.com` (로그인 없음, Cloudflare Tunnel 로 인터넷에 공개). 소스와 이미지 빌드는 [thatsmycodename.com](https://github.com/NINESTRING/thatsmycodename.com) 레포. 사이트 레포 main 에 푸시하면 그쪽 Image 워크플로가 이미지를 빌드한 뒤 이 레포의 `deployment.yaml` 태그를 올려 main 에 직접 푸시(`site: deploy <버전>`) → Argo CD 배포. 푸시 권한은 이 레포의 쓰기 deploy key `site-image-bump` (개인 키는 사이트 레포 시크릿 `GITOPS_DEPLOY_KEY`). Renovate 는 이 이미지를 건드리지 않는다 |
 | `kubernetes/apps/umami` | Umami 웹 분석(쿠키 없음) + 전용 PostgreSQL. 대시보드 `https://umami.thatsmycodename.com` (Tailscale 전용, 자체 로그인: 사용자 `admin`, 비밀번호는 `sops -d kubernetes/apps/umami/umami-secrets.sops.yaml` 의 `UMAMI_ADMIN_PASSWORD`). 개인 사이트의 방문을 모은다: 사이트 레이아웃의 `<script src="/script.js" data-website-id=...>` → Cloudflare Tunnel 이 `thatsmycodename.com/script.js`, `/api/send` 두 경로만 Umami 로 보냄(`infrastructure/cloudflared/config.yaml`). 방문자 IP/국가는 Cloudflare 헤더(`CF-Connecting-IP`, `CF-IPCountry`)에서 읽는다 |
+| `kubernetes/apps/spending` | [spending-mcp](https://github.com/NINESTRING/spending-mcp)(개인 지출 관리 MCP 서버) 전용 PostgreSQL 18. 클러스터 안에서만 열린다(`postgres.spending:5432`, DB/사용자 `spending`, 비밀번호는 `sops -d kubernetes/apps/spending/spending-secrets.sops.yaml` 의 `POSTGRES_PASSWORD`). 맥에서는 `kubectl -n spending port-forward svc/postgres 5433:5432` |
 
 ### 앱 추가 템플릿
 
