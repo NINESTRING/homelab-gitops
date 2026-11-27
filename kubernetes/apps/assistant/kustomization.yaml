@@ -1,0 +1,14 @@
+# assistant-mcp(옛 spending-mcp): 개인 카드 지출 관리 MCP 서버의 데이터베이스.
+# 지금은 전용 PostgreSQL 만 있다. 클러스터 안에서는 postgres.assistant:5432,
+# Tailscale 안에서는 assistant-db.thatsmycodename.com:443 (TLS 필수, ingressroute.yaml).
+# 시크릿: assistant-secrets.sops.yaml (POSTGRES_PASSWORD).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: assistant
+resources:
+  - namespace.yaml
+  - statefulset.yaml
+  - service.yaml
+  - ingressroute.yaml
+generators:
+  - secret-generator.yaml

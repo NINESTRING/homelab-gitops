@@ -8,7 +8,7 @@ env:
         key: api-token
 sources:
   - ingress
-  - traefik-proxy   # IngressRouteTCP 의 HostSNI (apps/spending 의 PostgreSQL). 어노테이션은 Ingress 와 같다
+  - traefik-proxy   # IngressRouteTCP 의 HostSNI (apps/assistant 의 PostgreSQL). 어노테이션은 Ingress 와 같다
 domainFilters:
   - thatsmycodename.com
 policy: sync            # 레포에서 Ingress 가 사라지면 레코드도 삭제

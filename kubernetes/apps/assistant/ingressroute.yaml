@@ -1,0 +1,33 @@
+# PostgreSQL 을 Tailscale 안에서 주소 하나로 연다: assistant-db.thatsmycodename.com:443 (포트포워딩 불필요).
+# 다른 내부 서비스와 같은 길이다: DNS(external-dns CNAME → macmini, Tailscale IP) → Traefik websecure(443).
+# Traefik 이 PostgreSQL 의 STARTTLS 를 알아듣고 SNI 로 이 라우트를 고른 뒤, 와일드카드 인증서로 TLS 를 끝내고
+# 평문으로 postgres:5432 에 넘긴다. 그래서 클라이언트는 반드시 TLS 로 붙어야 한다 (sslmode=require 이상. 평문은 라우팅 불가).
+#   postgres://assistant:<비밀번호>@assistant-db.thatsmycodename.com:443/assistant?sslmode=require
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: postgres
+  annotations:
+    external-dns.kubernetes.io/target: macmini.thatsmycodename.com
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: HostSNI(`assistant-db.thatsmycodename.com`)
+      services:
+        - name: postgres
+          port: 5432
+  tls:
+    options:
+      name: postgres
+      namespace: assistant
+---
+# libpq 17+ 는 TLS 에서 ALPN "postgresql" 만 제안한다. Traefik 기본값(h2, http/1.1)에는 없어서
+# "no application protocol" 로 끊기므로 이 호스트에만 따로 허용한다. (ALPN 을 안 보내는 node-postgres 는 무관)
+apiVersion: traefik.io/v1alpha1
+kind: TLSOption
+metadata:
+  name: postgres
+spec:
+  alpnProtocols:
+    - postgresql
